@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="tr" xml:lang="tr"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.42">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Aslı Torun">
+
+<title>Regresyondan Ormana: Model Seçiminde Stratejik Yaklaşımlar</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="sigorta_analiz1_files/libs/clipboard/clipboard.min.js"></script>
+<script src="sigorta_analiz1_files/libs/quarto-html/quarto.js"></script>
+<script src="sigorta_analiz1_files/libs/quarto-html/popper.min.js"></script>
+<script src="sigorta_analiz1_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="sigorta_analiz1_files/libs/quarto-html/anchor.min.js"></script>
+<link href="sigorta_analiz1_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="sigorta_analiz1_files/libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="sigorta_analiz1_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="sigorta_analiz1_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="sigorta_analiz1_files/libs/bootstrap/bootstrap-32162a2fca7cb0439643f2faaab1edf3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="sigorta_analiz1_files/libs/kePrint-0.0.1/kePrint.js"></script>
+
+<link href="sigorta_analiz1_files/libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Içindekiler</h2>
+   
+  <ul>
+  <li><a href="#regresyondan-ormana-model-seçiminde-stratejik-yaklaşımlar" id="toc-regresyondan-ormana-model-seçiminde-stratejik-yaklaşımlar" class="nav-link active" data-scroll-target="#regresyondan-ormana-model-seçiminde-stratejik-yaklaşımlar">Regresyondan Ormana: Model Seçiminde Stratejik Yaklaşımlar</a></li>
+  <li><a href="#giriş" id="toc-giriş" class="nav-link" data-scroll-target="#giriş">GİRİŞ</a>
+  <ul class="collapse">
+  <li><a href="#veri-setinin-tanıtımı" id="toc-veri-setinin-tanıtımı" class="nav-link" data-scroll-target="#veri-setinin-tanıtımı">Veri Setinin Tanıtımı</a></li>
+  <li><a href="#değişken-dönüşümleri" id="toc-değişken-dönüşümleri" class="nav-link" data-scroll-target="#değişken-dönüşümleri">Değişken Dönüşümleri</a></li>
+  <li><a href="#korelasyon-analizi" id="toc-korelasyon-analizi" class="nav-link" data-scroll-target="#korelasyon-analizi">Korelasyon Analizi</a></li>
+  <li><a href="#görsel-keşif-bmi-ve-charges" id="toc-görsel-keşif-bmi-ve-charges" class="nav-link" data-scroll-target="#görsel-keşif-bmi-ve-charges">Görsel Keşif: BMI ve Charges</a></li>
+  </ul></li>
+  <li><a href="#veri-setinin-eğitim-ve-test-olarak-ayrılması" id="toc-veri-setinin-eğitim-ve-test-olarak-ayrılması" class="nav-link" data-scroll-target="#veri-setinin-eğitim-ve-test-olarak-ayrılması">Veri Setinin Eğitim ve Test olarak ayrılması</a></li>
+  <li><a href="#lineer-regresyon-modeli" id="toc-lineer-regresyon-modeli" class="nav-link" data-scroll-target="#lineer-regresyon-modeli">Lineer Regresyon Modeli</a>
+  <ul class="collapse">
+  <li><a href="#varyans-enflasyon-faktörü-vif-sonuçları" id="toc-varyans-enflasyon-faktörü-vif-sonuçları" class="nav-link" data-scroll-target="#varyans-enflasyon-faktörü-vif-sonuçları">Varyans Enflasyon Faktörü (VIF) Sonuçları</a></li>
+  <li><a href="#model-varsayım-kontrolleri" id="toc-model-varsayım-kontrolleri" class="nav-link" data-scroll-target="#model-varsayım-kontrolleri">Model Varsayım Kontrolleri</a>
+  <ul class="collapse">
+  <li><a href="#residuals-vs-fitted" id="toc-residuals-vs-fitted" class="nav-link" data-scroll-target="#residuals-vs-fitted">1.Residuals vs Fitted</a></li>
+  <li><a href="#q-q-plot" id="toc-q-q-plot" class="nav-link" data-scroll-target="#q-q-plot">2. Q-Q Plot</a></li>
+  <li><a href="#scale-location" id="toc-scale-location" class="nav-link" data-scroll-target="#scale-location">3. Scale-Location</a></li>
+  <li><a href="#residuals-vs-leverage" id="toc-residuals-vs-leverage" class="nav-link" data-scroll-target="#residuals-vs-leverage">4. Residuals vs Leverage</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#interaction-term-analizi" id="toc-interaction-term-analizi" class="nav-link" data-scroll-target="#interaction-term-analizi">Interaction Term Analizi</a>
+  <ul class="collapse">
+  <li><a href="#model-varsayımları" id="toc-model-varsayımları" class="nav-link" data-scroll-target="#model-varsayımları">Model Varsayımları</a>
+  <ul class="collapse">
+  <li><a href="#residuals-vs-fitted-1" id="toc-residuals-vs-fitted-1" class="nav-link" data-scroll-target="#residuals-vs-fitted-1"><strong>1. Residuals vs Fitted:</strong></a></li>
+  <li><a href="#q-q-plot-1" id="toc-q-q-plot-1" class="nav-link" data-scroll-target="#q-q-plot-1"><strong>2. Q-Q Plot:</strong></a></li>
+  <li><a href="#scale-location-plot" id="toc-scale-location-plot" class="nav-link" data-scroll-target="#scale-location-plot"><strong>3. Scale-Location Plot:</strong></a></li>
+  <li><a href="#residuals-vs-leverage-cooks-distance" id="toc-residuals-vs-leverage-cooks-distance" class="nav-link" data-scroll-target="#residuals-vs-leverage-cooks-distance"><strong>4. Residuals vs Leverage (Cook’s Distance):</strong></a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#düzenlileştirme-teknikleriyle-modelin-dengesi-ridge-lasso" id="toc-düzenlileştirme-teknikleriyle-modelin-dengesi-ridge-lasso" class="nav-link" data-scroll-target="#düzenlileştirme-teknikleriyle-modelin-dengesi-ridge-lasso">Düzenlileştirme Teknikleriyle Modelin Dengesi: Ridge &amp; Lasso”</a>
+  <ul class="collapse">
+  <li><a href="#model-performansı" id="toc-model-performansı" class="nav-link" data-scroll-target="#model-performansı"><strong>Model Performansı</strong></a></li>
+  <li><a href="#lassonun-değişken-seçimi" id="toc-lassonun-değişken-seçimi" class="nav-link" data-scroll-target="#lassonun-değişken-seçimi"><strong>Lasso’nun Değişken Seçimi</strong></a></li>
+  </ul></li>
+  <li><a href="#robust-regresyon" id="toc-robust-regresyon" class="nav-link" data-scroll-target="#robust-regresyon">Robust Regresyon</a>
+  <ul class="collapse">
+  <li><a href="#model-varsayımı-kontrolleri" id="toc-model-varsayımı-kontrolleri" class="nav-link" data-scroll-target="#model-varsayımı-kontrolleri">Model Varsayımı Kontrolleri</a>
+  <ul class="collapse">
+  <li><a href="#residuals-vs-fitted-2" id="toc-residuals-vs-fitted-2" class="nav-link" data-scroll-target="#residuals-vs-fitted-2">1. Residuals vs Fitted</a></li>
+  <li><a href="#q-q-plot-2" id="toc-q-q-plot-2" class="nav-link" data-scroll-target="#q-q-plot-2">2. Q-Q Plot</a></li>
+  <li><a href="#scale-location-1" id="toc-scale-location-1" class="nav-link" data-scroll-target="#scale-location-1">3. Scale-Location</a></li>
+  <li><a href="#residuals-vs-leverage-1" id="toc-residuals-vs-leverage-1" class="nav-link" data-scroll-target="#residuals-vs-leverage-1">4. Residuals vs Leverage</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#regresyonun-alternatif-biçimleri-dönüşüm-ve-doğrusal-olmayan-yöntemler" id="toc-regresyonun-alternatif-biçimleri-dönüşüm-ve-doğrusal-olmayan-yöntemler" class="nav-link" data-scroll-target="#regresyonun-alternatif-biçimleri-dönüşüm-ve-doğrusal-olmayan-yöntemler">Regresyonun Alternatif Biçimleri: Dönüşüm ve Doğrusal Olmayan Yöntemler</a>
+  <ul class="collapse">
+  <li><a href="#a-logaritmik-dönüşüm" id="toc-a-logaritmik-dönüşüm" class="nav-link" data-scroll-target="#a-logaritmik-dönüşüm">a) Logaritmik Dönüşüm</a>
+  <ul class="collapse">
+  <li><a href="#model-varsayım-kontrolleri-1" id="toc-model-varsayım-kontrolleri-1" class="nav-link" data-scroll-target="#model-varsayım-kontrolleri-1">Model Varsayım Kontrolleri</a></li>
+  </ul></li>
+  <li><a href="#b-random-forest-modeli" id="toc-b-random-forest-modeli" class="nav-link" data-scroll-target="#b-random-forest-modeli">b) Random Forest Modeli</a></li>
+  </ul></li>
+  <li><a href="#model-performans-özeti" id="toc-model-performans-özeti" class="nav-link" data-scroll-target="#model-performans-özeti">Model Performans Özeti</a>
+  <ul class="collapse">
+  <li><a href="#sonuç" id="toc-sonuç" class="nav-link" data-scroll-target="#sonuç">Sonuç</a></li>
+  </ul></li>
+  <li><a href="#projenin-kapanışı" id="toc-projenin-kapanışı" class="nav-link" data-scroll-target="#projenin-kapanışı"><strong>Projenin Kapanışı</strong></a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Regresyondan Ormana: Model Seçiminde Stratejik Yaklaşımlar</h1>
+<p class="subtitle lead">Insurance Veri Seti Üzerinden Küçük Bir Yolculuk</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Yazar</div>
+    <div class="quarto-title-meta-contents">
+             <p>Aslı Torun </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="regresyondan-ormana-model-seçiminde-stratejik-yaklaşımlar" class="level1">
+<h1>Regresyondan Ormana: Model Seçiminde Stratejik Yaklaşımlar</h1>
+<p><em>Bu yolculukta, yalnızca model kurmakla sınırlı kalmadı; aynı zamanda istatistiksel anlamlılıkla pratik tahmin başarısı arasında bir denge kurma arayışına dönüştü. Klasik lineer regresyondan başlayan bu analiz süreci, varsayım ihlallerinin yönlendirmesiyle robust regresyona, log dönüşümüne ve Random Forest gibi güçlü makine öğrenmesi modellerine uzandı.</em></p>
+<p><em>Yorumlanabilirlik mi, öngörü gücü mü? Bu analiz boyunca her adımda bu sorunun cevabını yeniden düşündüm.</em></p>
+</section>
+<section id="giriş" class="level1">
+<h1>GİRİŞ</h1>
+<p>Bu çalışma, <code>insurance</code> veri seti üzerinden bireylerin sağlık harcamalarını (<code>charges</code>) tahmin etmek için kullanılan modellerin etkinliğini değerlendirmeyi amaçlamaktadır. Amaç, yalnızca doğrusal bir modelin sağlayabileceği tahmin performansını görmek değil; aynı zamanda model varsayımlarının sağlanıp sağlanmadığını incelemek, alternatif yaklaşımları test etmek ve tahmin performansı ile yorumlanabilirlik arasında bir denge kurmaya çalışmaktır.</p>
+<section id="veri-setinin-tanıtımı" class="level2">
+<h2 class="anchored" data-anchor-id="veri-setinin-tanıtımı">Veri Setinin Tanıtımı</h2>
+<p>Kullanılan veri seti <code>insurance</code> adlı veri setidir. Toplamda <strong>1338 gözlem</strong> ve <strong>7 değişken</strong> içermektedir. Bu değişkenler:</p>
+<ul>
+<li><code>age</code>: Bireyin yaşı<br>
+</li>
+<li><code>sex</code>: Cinsiyet<br>
+</li>
+<li><code>bmi</code>: Vücut kitle indeksi<br>
+</li>
+<li><code>children</code>: Çocuk sayısı<br>
+</li>
+<li><code>smoker</code>: Sigara içme durumu<br>
+</li>
+<li><code>region</code>: Bölge<br>
+</li>
+<li><code>charges</code>: Sağlık sigortası maliyeti (bağımlı değişken)</li>
+</ul>
+<p>Veri setinde eksik değer bulunmamaktadır ve analiz için temizlenmiş bir yapıdadır.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>insurance <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"C:/Users/TORUN/Desktop/insurance.csv"</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> insurance</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Veri setindeki değişkenlerin tipini ve yapısını incelenmiştir..</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(data)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>'data.frame':   1338 obs. of  7 variables:
+ $ age     : int  19 18 28 33 32 31 46 37 37 60 ...
+ $ sex     : chr  "female" "male" "male" "male" ...
+ $ bmi     : num  27.9 33.8 33 22.7 28.9 ...
+ $ children: int  0 1 3 0 0 0 1 3 2 0 ...
+ $ smoker  : chr  "yes" "no" "no" "no" ...
+ $ region  : chr  "southwest" "southeast" "southeast" "northwest" ...
+ $ charges : num  16885 1726 4449 21984 3867 ...</code></pre>
+</div>
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Her değişken için özet istatistiklere göz atıldı.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(data)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>      age            sex                 bmi           children    
+ Min.   :18.00   Length:1338        Min.   :15.96   Min.   :0.000  
+ 1st Qu.:27.00   Class :character   1st Qu.:26.30   1st Qu.:0.000  
+ Median :39.00   Mode  :character   Median :30.40   Median :1.000  
+ Mean   :39.21                      Mean   :30.66   Mean   :1.095  
+ 3rd Qu.:51.00                      3rd Qu.:34.69   3rd Qu.:2.000  
+ Max.   :64.00                      Max.   :53.13   Max.   :5.000  
+    smoker             region             charges     
+ Length:1338        Length:1338        Min.   : 1122  
+ Class :character   Class :character   1st Qu.: 4740  
+ Mode  :character   Mode  :character   Median : 9382  
+                                       Mean   :13270  
+                                       3rd Qu.:16640  
+                                       Max.   :63770  </code></pre>
+</div>
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Veri setinde eksik değer olup olmadığı kontrol edildi.</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">is.na</span>(data))</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+</div>
+</section>
+<section id="değişken-dönüşümleri" class="level2">
+<h2 class="anchored" data-anchor-id="değişken-dönüşümleri">Değişken Dönüşümleri</h2>
+<p>Kategorik değişkenlerin uygun biçimde <code>factor</code> formatına dönüştürülmesiyle analiz için hazırlık tamamlanmıştır.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>smoker <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>smoker)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>sex <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>sex)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>region <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>region)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="korelasyon-analizi" class="level2">
+<h2 class="anchored" data-anchor-id="korelasyon-analizi">Korelasyon Analizi</h2>
+<p>Bağımsız değişkenlerden BMI ve hedef değişken olan <code>charges</code> arasındaki ilişki incelenmiştir.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(data<span class="sc">$</span>bmi, data<span class="sc">$</span>charges)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.198341</code></pre>
+</div>
+</div>
+<p>Sonuç: Pozitif bir korelasyon gözlenmektedir ancak değer zayıf düzeydedir.</p>
+</section>
+<section id="görsel-keşif-bmi-ve-charges" class="level2">
+<h2 class="anchored" data-anchor-id="görsel-keşif-bmi-ve-charges">Görsel Keşif: BMI ve Charges</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(data<span class="sc">$</span>bmi, data<span class="sc">$</span>charges,</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="st">"pink"</span>, <span class="at">pch =</span> <span class="dv">1</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"BMI ve CHARGER"</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"BMI"</span>, <span class="at">ylab =</span> <span class="st">"Sigorta ucreti"</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span> ,<span class="at">col =</span> <span class="st">"darkblue"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sigorta_analiz1_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Bu grafik, bireylerin Vücut Kitle İndeksi (BMI) ile sigorta ücretleri arasındaki ilişkiyi göstermektedir. Görselde, BMI değeri arttıkça sigorta ücretlerinin artma eğilimi net bir şekilde görülmemektedir. Özellikle BMI değeri 30 civarında bir yoğunluk gözlemlenmiş, ancak bu grupta da ücret dağılımı oldukça geniş kalmıştır.</p>
+<p>Veri dağılımı, BMI değişkeninin sigorta ücretleri üzerindeki etkisinin tek başına sınırlı olabileceğini ve bu ilişkinin farklı değişkenlerle etkileşim içerisinde ele alınması gerektiğini düşündürmektedir.</p>
+</section>
+</section>
+<section id="veri-setinin-eğitim-ve-test-olarak-ayrılması" class="level1">
+<h1>Veri Setinin Eğitim ve Test olarak ayrılması</h1>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)  <span class="co"># Tekrarlanabilirlik için</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>index <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(data), <span class="at">size =</span> <span class="fl">0.7</span> <span class="sc">*</span> <span class="fu">nrow</span>(data))</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>traindata <span class="ot">&lt;-</span> data[index, ]</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>testdata <span class="ot">&lt;-</span> data[<span class="sc">-</span>index, ]</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="lineer-regresyon-modeli" class="level1">
+<h1>Lineer Regresyon Modeli</h1>
+<p>Veri setindeki tüm bağımsız değişkenler modele dahil edilerek klasik doğrusal regresyon modeli kurulmuştur:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">lm</span>(charges <span class="sc">~</span> ., <span class="at">data =</span> traindata)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>lm_pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(model, <span class="at">newdata =</span> testdata)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Modelin özet istatistiklerini incelendi.</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = charges ~ ., data = traindata)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-11021.8  -2987.9   -994.4   1713.2  30290.2 
+
+Coefficients:
+                 Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)     -12473.54    1216.97 -10.250  &lt; 2e-16 ***
+age                240.08      14.68  16.358  &lt; 2e-16 ***
+sexmale           -248.87     408.62  -0.609   0.5426    
+bmi                369.94      34.75  10.644  &lt; 2e-16 ***
+children           673.35     165.39   4.071 5.07e-05 ***
+smokeryes        23938.29     493.87  48.471  &lt; 2e-16 ***
+regionnorthwest   -595.16     580.59  -1.025   0.3056    
+regionsoutheast   -948.20     586.23  -1.617   0.1061    
+regionsouthwest  -1116.66     581.58  -1.920   0.0552 .  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 6185 on 927 degrees of freedom
+Multiple R-squared:  0.7478,    Adjusted R-squared:  0.7456 
+F-statistic: 343.6 on 8 and 927 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>Model, <code>bmi</code>, <code>age</code>, <code>children</code>, <code>smokeryes</code> değişkenlerinin istatistiksel olarak anlamlı etkiler sunduğunu göstermektedir. <code>sex</code> ve <code>region</code> gibi kategorik değişkenlerin düzeyleri ise anlamlılık eşiğinin altında kalmıştır. Modelin açıklayıcılığı yüksektir , bu da bağımlı değişkenin varyansının %74.6’inin model tarafından açıklandığını göstermektedir.</p>
+<section id="varyans-enflasyon-faktörü-vif-sonuçları" class="level3">
+<h3 class="anchored" data-anchor-id="varyans-enflasyon-faktörü-vif-sonuçları">Varyans Enflasyon Faktörü (VIF) Sonuçları</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(car)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Zorunlu paket yükleniyor: carData</code></pre>
+</div>
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">vif</span>(model)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>             GVIF Df GVIF^(1/(2*Df))
+age      1.012843  1        1.006401
+sex      1.019514  1        1.009710
+bmi      1.110905  1        1.053995
+children 1.002106  1        1.001053
+smoker   1.013654  1        1.006804
+region   1.098838  3        1.015833</code></pre>
+</div>
+</div>
+<p>Modelde yer alan değişkenler için Varyans Enflasyon Faktörü (VIF) değerleri incelendiğinde, tüm değişkenlerin VIF değerlerinin 2’nin oldukça altında olduğu görülmektedir. Bu durum, modelde çoklu doğrusal bağlantı (multikolinearite) sorununa işaret eden ciddi bir bulgu olmadığını göstermektedir.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(yardstick)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Gerçek ve tahmin değerlerini birleştirildi</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>lm_results <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">truth =</span> testdata<span class="sc">$</span>charges,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">prediction =</span> lm_pred</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Performans metrikleri hesaplandı</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>lm_metrics <span class="ot">&lt;-</span> lm_results <span class="sc">%&gt;%</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">metrics</span>(<span class="at">truth =</span> truth, <span class="at">estimate =</span> prediction)</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(lm_metrics)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 3
+  .metric .estimator .estimate
+  &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+1 rmse    standard    5822.   
+2 rsq     standard       0.755
+3 mae     standard    3994.   </code></pre>
+</div>
+</div>
+<p>Modelin test setinde elde edilen R² değeri %75.5 olarak hesaplanmış olup, eğitim setindeki %74.6 değerinden bir miktar daha yüksektir. Bu sonuç, modelin eğitim verisi dışında kalan yeni veriler üzerinde de güçlü bir açıklayıcılık sağladığını göstermektedir.</p>
+</section>
+<section id="model-varsayım-kontrolleri" class="level2">
+<h2 class="anchored" data-anchor-id="model-varsayım-kontrolleri">Model Varsayım Kontrolleri</h2>
+<p>Doğrusal regresyon modelinin güvenilir sonuçlar verebilmesi için bazı varsayımların sağlanması beklenir. Bu varsayımlar artıkların normalliği, sabit varyans(homoscedasticity), doğrusal ilişki ve aykırı gözlem etkileridir.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Model varsayımlarını incelemek için residual plot çizildi</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">2</span>))</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(model)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sigorta_analiz1_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="residuals-vs-fitted" class="level3">
+<h3 class="anchored" data-anchor-id="residuals-vs-fitted">1.Residuals vs Fitted</h3>
+<p>Model, veri setindeki belirli gruplarda sistematik sapmalar yapıyor olabilir. Lineerlik varsayımı tam olarak sağlanmamış olabilir, ancak robust regresyon bu etkileri hafifletmeyi amaçlar. Bu nedenle klasik regresyona kıyasla daha güvenilirdir.</p>
+</section>
+<section id="q-q-plot" class="level3">
+<h3 class="anchored" data-anchor-id="q-q-plot">2. Q-Q Plot</h3>
+<p>Artıkların dağılımı tam olarak normal değildir. Özellikle uç değerler normallikten sapmalar gözlemlenmektedir. Bu, t-testi gibi parametrik testlerde dikkat edilmesi gereken bir durumdur.</p>
+</section>
+<section id="scale-location" class="level3">
+<h3 class="anchored" data-anchor-id="scale-location">3. Scale-Location</h3>
+<p>Artıkların varyansı sabit değildir, bu durum <strong>heteroskedastisite</strong> işaretidir. Bu da klasik regresyon varsayımlarından birinin ihlali anlamına gelir. Robust regresyon, bu tür varyans değişimlerine daha dayanıklıdır.</p>
+</section>
+<section id="residuals-vs-leverage" class="level3">
+<h3 class="anchored" data-anchor-id="residuals-vs-leverage">4. Residuals vs Leverage</h3>
+<p>Bazı gözlemler yüksek leverage değerlerine sahiptir ve model üzerindeki etkisi büyüktür. Bu noktalar dikkatle incelenmeli, çünkü modelin genellenebilirliğini etkileyebilir.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Residual'ların normal dağılıma uyup uymadığını test edildi.</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">shapiro.test</span>(<span class="fu">residuals</span>(model))</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Shapiro-Wilk normality test
+
+data:  residuals(model)
+W = 0.90528, p-value &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>Bu test sonucunda artıkların normal dağılmadığı istatistiksel olarak da doğrulanmıştır. (p &lt; 0.05)</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cook’s Distance hesaplandı</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>cooksD <span class="ot">&lt;-</span> <span class="fu">cooks.distance</span>(model)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>influential <span class="ot">&lt;-</span> <span class="fu">which</span>(cooksD <span class="sc">&gt;</span> (<span class="dv">4</span> <span class="sc">/</span> <span class="fu">nrow</span>(data)))</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>data[influential, ] </span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>    age    sex    bmi children smoker    region   charges
+26   59 female 27.720        3     no southeast 14001.134
+30   31   male 36.300        2    yes southwest 38711.000
+33   19 female 28.600        5     no southwest  4687.797
+44   37 female 30.800        2     no southeast  6313.759
+45   38   male 37.050        1     no northeast  6079.672
+47   18 female 38.665        2     no northeast  3393.356
+52   21 female 33.630        2     no northwest  3579.829
+57   58 female 31.825        2     no northeast 13607.369
+71   27 female 24.750        0    yes southeast 16577.780
+73   53 female 28.100        3     no southwest 11741.726
+77   29 female 29.590        1     no southeast  3947.413
+92   53 female 24.795        1     no northwest 10942.132
+102  30   male 25.460        0     no northeast  3645.089
+152  48   male 29.700        0     no southeast  7789.635
+153  32 female 37.145        3     no northeast  6334.344
+154  42 female 23.370        0    yes northeast 19964.746
+155  40 female 25.460        1     no northeast  7077.189
+156  44   male 39.520        0     no northwest  6948.701
+170  27   male 18.905        3     no northeast  4827.905
+177  38   male 27.835        2     no northwest  6455.863
+182  18 female 38.280        0     no southeast  1631.821
+196  19   male 30.590        0     no northwest  1639.563
+198  45 female 28.600        2     no southeast  8516.829
+202  48 female 32.230        1     no southeast  8871.152
+204  27 female 36.080        0    yes southeast 37133.898
+205  46   male 22.300        0     no southwest  7147.105
+209  63 female 31.800        0     no southwest 13880.949
+221  34 female 33.700        1     no southwest  5012.471
+241  23 female 36.670        2    yes northeast 38511.628
+246  54   male 30.020        0     no northwest 24476.479
+247  60 female 38.060        0     no southeast 12648.703
+248  24   male 35.860        0     no southeast  1986.933
+299  31   male 34.390        3    yes northwest 38746.355
+309  58   male 34.865        0     no northeast 11944.594
+312  19 female 24.700        0     no southwest  1737.376
+319  44 female 27.645        0     no northwest  7421.195
+322  26 female 29.640        4     no northeast 24671.663
+328  45   male 36.480        2    yes northwest 42760.502
+334  56 female 28.785        0     no northeast 11658.379
+338  62   male 27.550        1     no northwest 13937.666
+363  19 female 21.700        0    yes southwest 13844.506
+371  61 female 21.090        0     no northwest 13415.038
+375  20   male 33.330        0     no southeast  1391.529
+383  55   male 33.000        0     no southeast 20781.489
+403  64 female 32.965        0     no northwest 14692.669
+423  40   male 32.775        1    yes northeast 39125.332
+427  38 female 27.265        1     no northeast  6555.070
+430  27 female 30.400        3     no northwest 18804.752
+433  42   male 26.900        0     no southwest  5969.723
+440  26   male 29.450        0     no northeast  2897.323
+443  18   male 43.010        0     no southeast  1149.396
+448  56 female 25.650        0     no northwest 11454.022
+459  56   male 39.600        0     no southwest 10601.412
+498  45   male 28.700        2     no southwest  8027.968
+510  57 female 28.700        0     no southwest 11455.280
+513  51   male 22.420        0     no northeast  9361.327
+516  58   male 35.700        0     no southwest 11362.755
+518  45   male 30.495        2     no northwest  8413.463
+528  51 female 25.800        1     no southwest  9861.025
+548  54 female 46.700        2     no southwest 11538.421
+553  62   male 21.400        0     no southwest 12957.118
+557  46   male 33.440        1     no northeast  8334.590
+558  34   male 34.210        0     no southeast  3935.180
+568  41   male 30.590        2     no northwest  7256.723
+584  32 female 23.650        1     no southeast 17626.240
+600  52 female 37.525        2     no northwest 33471.972
+605  19 female 28.310        0    yes northwest 17468.984
+607  27 female 25.175        0     no northeast  3558.620
+621  30   male 31.400        1     no southwest  3659.346
+623  49 female 21.300        1     no southwest  9182.170
+631  53   male 36.100        1     no southwest 10085.846
+636  64   male 38.190        0     no northeast 14410.932
+644  23 female 34.960        3     no northwest  4466.621
+650  58 female 32.965        0     no northeast 12430.953
+661  37   male 46.530        3     no southeast  6435.624
+664  18   male 33.660        0     no southeast  1136.399
+669  62   male 32.015        0    yes northeast 45710.208
+686  53   male 26.410        2     no northeast 11244.377
+698  41   male 35.750        1    yes southeast 40273.645
+712  50 female 23.540        2     no southeast 10107.221
+724  19   male 35.400        0     no southwest  1263.249
+725  50 female 27.075        1     no northeast 10106.134
+727  41   male 28.405        1     no northwest  6664.686
+733  24 female 30.100        3     no southwest  4234.927
+745  50   male 26.410        0     no northwest  8827.210
+752  21   male 28.975        0     no northwest  1906.358
+754  58 female 22.770        0     no southeast 11833.782
+758  47 female 27.830        0    yes southeast 23065.421
+772  53 female 26.700        2     no southwest 11150.780
+779  35   male 34.320        3     no southeast  5934.380
+784  50 female 27.600        1    yes southwest 24520.264
+789  29   male 22.515        3     no northeast  5209.579
+792  19   male 27.600        0     no southwest  1252.407
+799  58 female 33.100        0     no southwest 11848.141
+802  64 female 35.970        0     no southeast 14313.846
+812  33 female 42.940        3     no northwest  6360.994
+815  36   male 34.430        2     no southeast  5584.306
+821  45   male 33.700        1     no southwest  7445.918
+842  59   male 24.700        0     no northeast 12323.936
+844  57 female 29.810        0    yes southeast 27533.913
+850  55   male 32.775        0     no northwest 10601.632
+861  37 female 47.600        2    yes southwest 46113.511
+883  21 female 22.135        0     no northeast  2585.851
+888  36 female 30.020        0     no northwest  5272.176
+906  26 female 29.355        2     no northeast  4564.191
+909  63   male 39.800        3     no southwest 15170.069
+917  43 female 26.885        0    yes northwest 21774.322
+925  43   male 23.200        0     no southwest  6250.435</code></pre>
+</div>
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(influential)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 51290</code></pre>
+</div>
+</div>
+<p><strong>Cooks Distance:</strong> Etkili gözlemleri belirlemek için Cook’s Distance kullanılmış ve oldukça yüksek sayıda etkili gözlem bulunmuştur. Bu kadar fazla sayıda gözlemin modelden çıkarılması, modeli ciddi şekilde daraltacağından uygun bir çözüm değildir. Bunun yerine, aykırı gözlemlere karşı dayanıklı bir yöntem denenmiştir.</p>
+</section>
+</section>
+</section>
+<section id="interaction-term-analizi" class="level1">
+<h1>Interaction Term Analizi</h1>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>model_interaction <span class="ot">&lt;-</span> <span class="fu">lm</span>(charges <span class="sc">~</span> . <span class="sc">+</span> bmi<span class="sc">:</span>smoker, <span class="at">data =</span> traindata)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model_interaction)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = charges ~ . + bmi:smoker, data = traindata)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-14953  -1860  -1258   -375  30505 
+
+Coefficients:
+                 Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)      -2099.77    1064.64  -1.972   0.0489 *  
+age                254.40      11.68  21.785  &lt; 2e-16 ***
+sexmale           -611.19     325.05  -1.880   0.0604 .  
+bmi                 26.59      31.30   0.850   0.3958    
+children           603.31     131.45   4.590 5.05e-06 ***
+smokeryes       -20329.71    1941.02 -10.474  &lt; 2e-16 ***
+regionnorthwest   -744.50     461.37  -1.614   0.1069    
+regionsoutheast   -881.51     465.81  -1.892   0.0587 .  
+regionsouthwest  -1291.67     462.17  -2.795   0.0053 ** 
+bmi:smokeryes     1441.20      61.89  23.287  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 4914 on 926 degrees of freedom
+Multiple R-squared:  0.8409,    Adjusted R-squared:  0.8394 
+F-statistic:   544 on 9 and 926 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>Etkileşim terimi eklenmiş modelde, açıklayıcı değişkenlerden <em>bmi</em> ile <em>smoker</em> arasındaki etkileşim anlamlı çıkmıştır (p &lt; 0.001). Bu durum, vücut kitle indeksi (BMI) ile sigara kullanımı arasında önemli bir etkileşim olduğunu ve bu iki değişkenin birlikte, sağlık harcamaları üzerinde birleşik bir etkisi olduğunu göstermektedir.</p>
+<p>Etkileşimli modelin açıklayıcılığı temel lineer modele kıyasla artmıştır. Bu da modele etkileşim eklemenin tahmin gücünü artırdığını göstermektedir.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(traindata, <span class="fu">aes</span>(<span class="at">x =</span> bmi, <span class="at">y =</span> charges, <span class="at">color =</span> smoker)) <span class="sc">+</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"yes"</span> <span class="ot">=</span> <span class="st">"pink"</span>, <span class="st">"no"</span> <span class="ot">=</span> <span class="st">"steelblue"</span>))</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sigorta_analiz1_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"BMI ve Charges Arasındaki İliski (Sigara Durumuna Gore)"</span>,</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"BMI"</span>, <span class="at">y =</span> <span class="st">"Charges"</span>) <span class="sc">+</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_gray</span>()</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
+</div>
+</div>
+<p>Etkileşim terimi eklenmiş modelde, sigara kullanımı ve BMI arasındaki ilişkinin sağlık harcamalarını birlikte etkilediği görülmektedir. Modelin açıklayıcılığı artmış, etkileşim anlamlı bulunmuştur (<em>p &lt; 0.001</em>). Bu durum, BMI’nin etkisinin sigara içen bireylerde daha yüksek olduğunu göstermektedir.</p>
+<section id="model-varsayımları" class="level2">
+<h2 class="anchored" data-anchor-id="model-varsayımları">Model Varsayımları</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">2</span>))</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(model_interaction)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sigorta_analiz1_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="residuals-vs-fitted-1" class="level3">
+<h3 class="anchored" data-anchor-id="residuals-vs-fitted-1"><strong>1. Residuals vs Fitted:</strong></h3>
+<p>Artıklar, düşük değerlerde biraz yoğunlaşmış ve bazı yüksek değerlerde sapmalar gözleniyor. Bu, modelin bazı uç tahminlerde sistematik hatalar yapabileceğini gösteriyor.</p>
+</section>
+<section id="q-q-plot-1" class="level3">
+<h3 class="anchored" data-anchor-id="q-q-plot-1"><strong>2. Q-Q Plot:</strong></h3>
+<p>Normal dağılıma uyum orta düzeyde. Kuyruklarda (özellikle üstte) ciddi sapmalar var. Normal dağılım varsayımı tam olarak sağlanmıyor.</p>
+</section>
+<section id="scale-location-plot" class="level3">
+<h3 class="anchored" data-anchor-id="scale-location-plot"><strong>3. Scale-Location Plot:</strong></h3>
+<p>Artık varyansı düşük değerlerde az, yüksek değerlerde artıyor. Bu durum <strong>heteroskedastisite</strong> ihtimalini gösteriyor.</p>
+</section>
+<section id="residuals-vs-leverage-cooks-distance" class="level3">
+<h3 class="anchored" data-anchor-id="residuals-vs-leverage-cooks-distance"><strong>4. Residuals vs Leverage (Cook’s Distance):</strong></h3>
+<p>129. gözlem dikkat çekiyor; yüksek kaldıraç ve etkili bir artık değer içeriyor. Modelin sağlamlığı açısından bu nokta incelenmeli.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">shapiro.test</span>(<span class="fu">residuals</span>(model_interaction))</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Shapiro-Wilk normality test
+
+data:  residuals(model_interaction)
+W = 0.66275, p-value &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>Shapiro-Wilk testi sonucuna göre, model artıklarının normal dağılım varsayımı <strong>reddedilmiştir</strong> (W = 0.66275, p &lt; 0.001). Bu bulgu, Q-Q grafiğindeki sapmalarla tutarlıdır ve klasik varsayımlar altında yorum yapılırken dikkatli olunması gerektiğini göstermektedir.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>cooksd <span class="ot">&lt;-</span> <span class="fu">cooks.distance</span>(model_interaction)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(cooksd, <span class="at">type =</span> <span class="st">"h"</span>, <span class="at">main =</span> <span class="st">"Cook's Distance"</span>, <span class="at">ylab =</span> <span class="st">"Cook's Distance"</span>)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">4</span><span class="sc">/</span><span class="fu">length</span>(cooksd), <span class="at">col =</span> <span class="st">"darkred"</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sigorta_analiz1_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Interaction terimli model için yapılan Cook’s Distance analizinde, bazı gözlemlerin model tahminlerine orantısız etki yaptığı gözlemlenmiştir. Grafik incelendiğinde, eşik değeri olan 4/n’in (kırmızı çizgi) üzerinde kalan birkaç gözlem dikkat çekmektedir. Bu noktalar, potansiyel olarak etkili gözlemler olup, modelin sağlamlığı açısından ayrı değerlendirilmelidir.</p>
+<section id="varyans-enflasyon-faktörü-vif-sonuçları-1" class="level4">
+<h4 class="anchored" data-anchor-id="varyans-enflasyon-faktörü-vif-sonuçları-1">Varyans Enflasyon Faktörü (VIF) Sonuçları</h4>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(car)</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">vif</span>(model_interaction)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>there are higher-order terms (interactions) in this model
+consider setting type = 'predictor'; see ?vif</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                GVIF Df GVIF^(1/(2*Df))
+age         1.015658  1        1.007799
+sex         1.021855  1        1.010869
+bmi         1.427583  1        1.194815
+children    1.002631  1        1.001315
+smoker     24.800552  1        4.980015
+region      1.099630  3        1.015955
+bmi:smoker 25.070963  1        5.007091</code></pre>
+</div>
+</div>
+<p>Modeldeki <code>smoker</code> ve <code>bmi:smoker</code> değişkenlerine ait VIF değerleri sırasıyla <strong>4.98</strong> ve <strong>5.01</strong> olarak hesaplanmıştır. Bu değerler, değişkenler arasında anlamlı bir <strong>çoklu doğrusal bağlantı (multikolinearite)</strong> olabileceğini göstermektedir. Diğer tüm değişkenlerin VIF değerleri 2’nin altındadır ve bu durum diğer değişkenlerde multikolinearite sorununun olmadığını göstermektedir. Bu bağlamda, özellikle <code>smoker</code> ve <code>bmi:smoker</code> değişkenlerinin yüksek korelasyon taşıdığı göz önünde bulundurulmalıdır.</p>
+</section>
+</section>
+</section>
+</section>
+<section id="düzenlileştirme-teknikleriyle-modelin-dengesi-ridge-lasso" class="level1">
+<h1>Düzenlileştirme Teknikleriyle Modelin Dengesi: Ridge &amp; Lasso”</h1>
+<p>Ridge ve Lasso regresyon modelleri, klasik lineer modele göre değişken sayısı fazla ya da çoklu doğrusal bağlantı ihtimali olan veri setlerinde aşırı uyum (overfitting) riskini azaltmak amacıyla tercih edilir. Bu modeller, parametre katsayılarını belirli bir ceza terimi ile küçülterek daha dengeli tahminler sunar.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(glmnet)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(caret)</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>x_train <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(charges <span class="sc">~</span> ., <span class="at">data =</span> traindata)[,<span class="sc">-</span><span class="dv">1</span>]  <span class="co"># -1 intercepti çıkarıldı</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>y_train <span class="ot">&lt;-</span> traindata<span class="sc">$</span>charges</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>x_test <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(charges <span class="sc">~</span> ., <span class="at">data =</span> testdata)[,<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>y_test <span class="ot">&lt;-</span> testdata<span class="sc">$</span>charges</span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Ridge modeli (alpha=0) ve lambda için cross-validation</span></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>cv_ridge <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(x_train, y_train, <span class="at">alpha =</span> <span class="dv">0</span>)</span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a><span class="co"># En iyi lambda'yı al</span></span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>best_lambda_ridge <span class="ot">&lt;-</span> cv_ridge<span class="sc">$</span>lambda.min</span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Modeli eğit</span></span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a>ridge_model <span class="ot">&lt;-</span> <span class="fu">glmnet</span>(x_train, y_train, <span class="at">alpha =</span> <span class="dv">0</span>, <span class="at">lambda =</span> best_lambda_ridge)</span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Lasso modeli (alpha=1) ve lambda için cross-validation</span></span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>cv_lasso <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(x_train, y_train, <span class="at">alpha =</span> <span class="dv">1</span>)</span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a>best_lambda_lasso <span class="ot">&lt;-</span> cv_lasso<span class="sc">$</span>lambda.min</span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a>lasso_model <span class="ot">&lt;-</span> <span class="fu">glmnet</span>(x_train, y_train, <span class="at">alpha =</span> <span class="dv">1</span>, <span class="at">lambda =</span> best_lambda_lasso)</span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Tahminler</span></span>
+<span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a>ridge_pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(ridge_model, <span class="at">s =</span> best_lambda_ridge, <span class="at">newx =</span> x_test)</span>
+<span id="cb39-30"><a href="#cb39-30" aria-hidden="true" tabindex="-1"></a>lasso_pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(lasso_model, <span class="at">s =</span> best_lambda_lasso, <span class="at">newx =</span> x_test)</span>
+<span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. Performans ölçümleri (örnek olarak RMSE ve R2)</span></span>
+<span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Metrics)</span>
+<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a>rmse_ridge <span class="ot">&lt;-</span> <span class="fu">rmse</span>(y_test, ridge_pred)</span>
+<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a>rmse_lasso <span class="ot">&lt;-</span> <span class="fu">rmse</span>(y_test, lasso_pred)</span>
+<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-38"><a href="#cb39-38" aria-hidden="true" tabindex="-1"></a><span class="co"># R^2 için basit hesaplama</span></span>
+<span id="cb39-39"><a href="#cb39-39" aria-hidden="true" tabindex="-1"></a>rsq <span class="ot">&lt;-</span> <span class="cf">function</span>(true, pred) {</span>
+<span id="cb39-40"><a href="#cb39-40" aria-hidden="true" tabindex="-1"></a>  <span class="dv">1</span> <span class="sc">-</span> <span class="fu">sum</span>((true <span class="sc">-</span> pred)<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">sum</span>((true <span class="sc">-</span> <span class="fu">mean</span>(true))<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb39-41"><a href="#cb39-41" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb39-42"><a href="#cb39-42" aria-hidden="true" tabindex="-1"></a>r2_ridge <span class="ot">&lt;-</span> <span class="fu">rsq</span>(y_test, ridge_pred)</span>
+<span id="cb39-43"><a href="#cb39-43" aria-hidden="true" tabindex="-1"></a>r2_lasso <span class="ot">&lt;-</span> <span class="fu">rsq</span>(y_test, lasso_pred)</span>
+<span id="cb39-44"><a href="#cb39-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-45"><a href="#cb39-45" aria-hidden="true" tabindex="-1"></a><span class="co"># 7. Lasso'da sıfırlanan değişkenler</span></span>
+<span id="cb39-46"><a href="#cb39-46" aria-hidden="true" tabindex="-1"></a>coef_lasso <span class="ot">&lt;-</span> <span class="fu">coef</span>(lasso_model)</span>
+<span id="cb39-47"><a href="#cb39-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-48"><a href="#cb39-48" aria-hidden="true" tabindex="-1"></a>coef_lasso <span class="ot">&lt;-</span> <span class="fu">coef</span>(lasso_model)</span>
+<span id="cb39-49"><a href="#cb39-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Katsayıları veri çerçevesine çevirip sıfır olanları filtrele</span></span>
+<span id="cb39-50"><a href="#cb39-50" aria-hidden="true" tabindex="-1"></a>lasso_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">as.matrix</span>(coef_lasso))</span>
+<span id="cb39-51"><a href="#cb39-51" aria-hidden="true" tabindex="-1"></a>lasso_df<span class="sc">$</span>feature <span class="ot">&lt;-</span> <span class="fu">rownames</span>(lasso_df)</span>
+<span id="cb39-52"><a href="#cb39-52" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(lasso_df)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">"coefficient"</span></span>
+<span id="cb39-53"><a href="#cb39-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-54"><a href="#cb39-54" aria-hidden="true" tabindex="-1"></a>zero_coef <span class="ot">&lt;-</span> <span class="fu">subset</span>(lasso_df, coefficient <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> feature <span class="sc">!=</span> <span class="st">"(Intercept)"</span>)</span>
+<span id="cb39-55"><a href="#cb39-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-56"><a href="#cb39-56" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Lasso'da sifirlanan degiskenler:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Lasso'da sifirlanan degiskenler:</code></pre>
+</div>
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(zero_coef<span class="sc">$</span>feature)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>character(0)</code></pre>
+</div>
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Çıktılar</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Ridge RMSE:"</span>, rmse_ridge, <span class="st">"R2:"</span>, r2_ridge, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Ridge RMSE: 5858.98 R2: 0.7504072 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Lasso RMSE:"</span>, rmse_lasso, <span class="st">"R2:"</span>, r2_lasso, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Lasso RMSE: 5817.741 R2: 0.7539084 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Lasso'da sifirlanan degiskenler:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Lasso'da sifirlanan degiskenler:</code></pre>
+</div>
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">names</span>(zero_coef))</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "coefficient" "feature"    </code></pre>
+</div>
+</div>
+<section id="model-performansı" class="level3">
+<h3 class="anchored" data-anchor-id="model-performansı"><strong>Model Performansı</strong></h3>
+<p>Her iki modelin test verisi üzerindeki performansına baktığımızda, Ridge ve Lasso benzer RMSE ve R² değerlerini verdi. Bu durum, veri setindeki çoklu doğrusal bağlantının ciddi bir sorun olmadığını ve modellerin veri yapısına iyi uyduğunu gösteriyor.</p>
+</section>
+<section id="lassonun-değişken-seçimi" class="level3">
+<h3 class="anchored" data-anchor-id="lassonun-değişken-seçimi"><strong>Lasso’nun Değişken Seçimi</strong></h3>
+<p>Lasso modelinde beklenenin aksine bazı değişkenlerin katsayıları sıfırlanmadı. Bu, veri setindeki değişkenlerin hepsinin modele belirli bir katkısı olduğunu ve değişken sayısının az olması nedeniyle modelin baskılayıcı ceza terimiyle değişken eleme yapamadığını işaret ediyor. Bu da multikolinearitenin az olduğunu destekliyor.</p>
+<p>Bu sonuçlar, klasik regresyon analizinde multikolinearite sorunu olmadığını doğruluyor. Ridge ve Lasso’nun benzer sonuçlar vermesi, değişkenlerin her birinin modele anlamlı katkısı olduğunu gösteriyor. Dolayısıyla bu veri setinde, modellerin karmaşıklığını artırmadan klasik doğrusal regresyonla sağlam ve açıklanabilir modeller kurmak mümkün. Ancak, ileriye dönük büyük ve daha karmaşık veri setlerinde Ridge ve Lasso gibi düzenlileştirme teknikleri önem kazanacaktır.</p>
+</section>
+</section>
+<section id="robust-regresyon" class="level1">
+<h1>Robust Regresyon</h1>
+<p>Aykırı değerlere karşı daha dayanıklı bir yöntem olan Robust Lineer Regresyon kullanılarak model yeniden kurulmuştur.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(yardstick)</span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>robust_model <span class="ot">&lt;-</span> <span class="fu">rlm</span>(charges <span class="sc">~</span>. , <span class="at">data =</span> traindata)</span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>rlm_pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(robust_model, <span class="at">newdata =</span> testdata)</span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(robust_model)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call: rlm(formula = charges ~ ., data = traindata)
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-19948.04   -678.46    -86.51    718.45  25802.05 
+
+Coefficients:
+                Value      Std. Error t value   
+(Intercept)     -5115.7302   251.5649   -20.3356
+age               262.2913     3.0339    86.4539
+sexmale          -366.1908    84.4667    -4.3353
+bmi                66.4554     7.1841     9.2503
+children          472.7488    34.1887    13.8276
+smokeryes       30611.6475   102.0899   299.8498
+regionnorthwest  -318.4419   120.0172    -2.6533
+regionsoutheast  -660.9491   121.1827    -5.4542
+regionsouthwest  -692.8628   120.2213    -5.7632
+
+Residual standard error: 1038 on 927 degrees of freedom</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Gerçek ve tahmin değerlerini birleştirildi</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>rlm_results <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">truth =</span> testdata<span class="sc">$</span>charges,</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">prediction =</span> rlm_pred</span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Performans metriklerini hesaplandı</span></span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>rlm_metrics <span class="ot">&lt;-</span> rlm_results <span class="sc">%&gt;%</span></span>
+<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">metrics</span>(<span class="at">truth =</span> truth, <span class="at">estimate =</span> prediction)</span>
+<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(rlm_metrics)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 3
+  .metric .estimator .estimate
+  &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+1 rmse    standard    6389.   
+2 rsq     standard       0.741
+3 mae     standard    3158.   </code></pre>
+</div>
+</div>
+<p>Yeni modelde sapmalar önemli ölçüde azalmış, artıkların dağılımı daha kararlı hale gelmiştir. Özellikle “smoker” değişkeni modelde çok baskın bir değişken olarak kalmıştır. Modelin açıklayıcılığı ise %74 olarak bulunmuştur.</p>
+<section id="model-varsayımı-kontrolleri" class="level2">
+<h2 class="anchored" data-anchor-id="model-varsayımı-kontrolleri">Model Varsayımı Kontrolleri</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">2</span>))</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(robust_model)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sigorta_analiz1_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="residuals-vs-fitted-2" class="level3">
+<h3 class="anchored" data-anchor-id="residuals-vs-fitted-2">1. Residuals vs Fitted</h3>
+<p>Model, veri setindeki belirli gruplarda sistematik sapmalar yapıyor olabilir. Lineerlik varsayımı tam olarak sağlanmamış olabilir ancak robust regresyon bu etkileri hafifletmeyi amaçlar. Bu nedenle klasik regresyona kıyasla daha güvenilirdir.</p>
+</section>
+<section id="q-q-plot-2" class="level3">
+<h3 class="anchored" data-anchor-id="q-q-plot-2">2. Q-Q Plot</h3>
+<p>Artıkların dağılımı tam olarak normal olmamakla birlikte uç noktalarda teorik çizgiden sapmalar var. Bu durum klasik OLS model için sorun yaratabilirken robust regresyon uç değerlere karşı daha dirençli olduğu için modelin güvenilirliğini önemli ölçüde korur.</p>
+</section>
+<section id="scale-location-1" class="level3">
+<h3 class="anchored" data-anchor-id="scale-location-1">3. Scale-Location</h3>
+<p>Modelde <strong>değişen varyans (heteroskedastisite)</strong> söz konusu olabilir. Artıkların varyansı fitted değerlere göre artıyor gibi görünüyor. Düşük ve yüksek tahmin değerlerinde daha geniş bir yayılma gözleniyor. Ancak robust regresyon bu gibi sorunlara karşı daha dayanıklıdır. Yine de varyans stabilitesinin sınırlı olduğu göz önünde bulundurulmalı.</p>
+</section>
+<section id="residuals-vs-leverage-1" class="level3">
+<h3 class="anchored" data-anchor-id="residuals-vs-leverage-1">4. Residuals vs Leverage</h3>
+<p>Çoğu gözlem düşük leverage ve düşük standardized residuals bölgesinde yoğunlaşmış. Cook’s distance çizgisine yakın ya da üzerinde birkaç gözlem mevcut. Veri setinde model üzerinde yüksek etkili birkaç gözlem var.</p>
+<section id="genel-değerlendirme" class="level4">
+<h4 class="anchored" data-anchor-id="genel-değerlendirme">Genel değerlendirme</h4>
+<p>Robust regresyon modeli, veri setindeki uç değerler ve değişen varyans gibi klasik modellemeyi bozabilecek durumlara karşı başarılı bir çözüm sunmuştur. Yine de bazı model varsayımlarında (örneğin homoskedastisite ve normalite) sınırlı sapmalar mevcuttur. Bu model, yorumlanabilirliği korurken klasik modele göre daha sağlam bir çözüm sunar.</p>
+</section>
+<section id="robust-regresyonda-normallik-varsayımı-neden-kritik-değildir" class="level4">
+<h4 class="anchored" data-anchor-id="robust-regresyonda-normallik-varsayımı-neden-kritik-değildir">Robust Regresyonda Normallik Varsayımı Neden Kritik Değildir?</h4>
+<p>Klasik lineer regresyon modellerinde (OLS - Ordinary Least Squares), artıkların (residuals) normal dağıldığı varsayımı modelin güven aralıkları, p-değerleri gibi istatistiksel çıkarımlarda doğru sonuçlar elde edebilmek için önemlidir. Ancak bu varsayım modelin tahmin performansı açısından <strong>doğrudan zorunlu değildir</strong>.</p>
+<p>Robust regresyon (<code>rlm()</code>), özellikle uç değerlerin (outliers) ve yüksek leverage’lı gözlemlerin modele olan etkisini azaltmak amacıyla geliştirilmiş bir tekniktir. Bu model, <strong>M-tahmin edicileri</strong> kullanarak, hataları minimize ederken klasik OLS’nin duyarlılığını azaltır.</p>
+<p>Robust regresyonda model tahminlerinin güvenilirliği, artıkların normal dağılıp dağılmamasından daha az etkilenir.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">shapiro.test</span>(<span class="fu">resid</span>(robust_model))</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Shapiro-Wilk normality test
+
+data:  resid(robust_model)
+W = 0.73123, p-value &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<ul>
+<li><p>Normallik testi yapılabilir ancak bu testler daha çok <strong>artıkların genel yapısını gözlemlemek</strong> amacıyla kullanılır, varsayım ihlali modelin geçerliliğini doğrudan bozmaz.</p>
+<p>Robust regresyonun avantajı, dağılım varsayımlarına bağlı olmadan bile <strong>istikrarlı ve etkili sonuçlar üretebilmesidir.</strong></p></li>
+</ul>
+</section>
+</section>
+</section>
+</section>
+<section id="regresyonun-alternatif-biçimleri-dönüşüm-ve-doğrusal-olmayan-yöntemler" class="level1">
+<h1>Regresyonun Alternatif Biçimleri: Dönüşüm ve Doğrusal Olmayan Yöntemler</h1>
+<section id="a-logaritmik-dönüşüm" class="level2">
+<h2 class="anchored" data-anchor-id="a-logaritmik-dönüşüm">a) Logaritmik Dönüşüm</h2>
+<p>Bu dönüşüm, genellikle değişen varyans (heteroskedastisite) sorununu azaltmak ve verinin dağılımını normalize etmek için kullanılır. Bu dönüşüm, regresyon modelinin daha stabil ve güvenilir sonuçlar üretmesine yardımcı olabilir.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(caret)</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>train_log <span class="ot">&lt;-</span> <span class="fu">train</span>(</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">log</span>(charges) <span class="sc">~</span>. ,</span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> traindata,</span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"lm"</span>,</span>
+<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="st">"RMSE"</span></span>
+<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(train_log)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = .outcome ~ ., data = dat)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.14739 -0.21762 -0.04584  0.09002  2.11890 
+
+Coefficients:
+                 Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)      7.016253   0.086857  80.779  &lt; 2e-16 ***
+age              0.033395   0.001047  31.880  &lt; 2e-16 ***
+sexmale         -0.073590   0.029164  -2.523 0.011790 *  
+bmi              0.015285   0.002480   6.162 1.07e-09 ***
+children         0.110214   0.011804   9.337  &lt; 2e-16 ***
+smokeryes        1.557516   0.035248  44.187  &lt; 2e-16 ***
+regionnorthwest -0.102579   0.041438  -2.475 0.013484 *  
+regionsoutheast -0.149333   0.041840  -3.569 0.000377 ***
+regionsouthwest -0.142095   0.041508  -3.423 0.000646 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.4414 on 927 degrees of freedom
+Multiple R-squared:  0.7682,    Adjusted R-squared:  0.7662 
+F-statistic:   384 on 8 and 927 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>pred_log <span class="ot">&lt;-</span> <span class="fu">predict</span>(train_log, <span class="at">newdata =</span> testdata)</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>pred_log_exp <span class="ot">&lt;-</span> <span class="fu">exp</span>(pred_log)</span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a><span class="fu">postResample</span>(<span class="at">pred =</span> pred_log_exp, <span class="at">obs =</span> testdata<span class="sc">$</span>charges)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>        RMSE     Rsquared          MAE 
+8072.4566109    0.6656608 4008.0111554 </code></pre>
+</div>
+</div>
+<section id="modelin-katsayılarına-bakıldığında" class="level4">
+<h4 class="anchored" data-anchor-id="modelin-katsayılarına-bakıldığında">Modelin katsayılarına bakıldığında:</h4>
+<p>Yaş 1 yıl arttığında, sağlık harcamaları <strong>yaklaşık %3.3 artar</strong>.</p>
+<p>Erkeklerin sağlık harcamaları, kadınlara göre <strong>yaklaşık %7.4 daha düşük</strong>.</p>
+<p>BMI değeri 1 birim arttığında harcamalar <strong>%1.53 artar</strong>.</p>
+<p>Sigara içenlerin harcamaları, içmeyenlere göre <strong>yaklaşık exp(1.557) ≈ 4.74 kat</strong> daha fazladır.</p>
+<p><strong>southeast bölgesindekiler</strong>, northeast bölgesine göre <strong>%14.9 daha az harcama yapmaktadır.</strong></p>
+<p>Logaritmik dönüşümle kurulan lineer modelin eğitim verisindeki performans göstergesi <code>R² = 0.768</code> olup model charges değişkenindeki varyansın yaklaşık %76.8’ini açıklayabilmektedir. Ancak test verisindeki R² değeri <code>0.665</code> olarak bulunmuştur. Bu fark, modelin eğitim verisine ne kadar uyum sağladığıyla, yeni veriler üzerinde ne kadar genellenebilir olduğunu gösteren önemli bir göstergedir. Eğitim setine göre daha düşük çıkan test seti R² değeri, modelin öğrenilen desenleri yeni veriye tam olarak genelleyemediğini ortaya koymaktadır. Bu durum, log dönüşüm uygulansa da belirli doğrusal olmayan ilişkilerin veya etkileşimlerin modelin tahmin gücünü sınırladığını düşündürmektedir.</p>
+</section>
+<section id="model-varsayım-kontrolleri-1" class="level3">
+<h3 class="anchored" data-anchor-id="model-varsayım-kontrolleri-1">Model Varsayım Kontrolleri</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Residuals vs Fitted</span></span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">fitted</span>(train_log), <span class="fu">residuals</span>(train_log),</span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="st">"pink"</span>,</span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Fitted values"</span>,</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylab =</span> <span class="st">"Residuals"</span>,</span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"Residuals vs Fitted"</span>)</span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"darkred"</span>)</span>
+<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Q-Q Plot</span></span>
+<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a><span class="fu">qqnorm</span>(<span class="fu">residuals</span>(train_log))</span>
+<span id="cb62-12"><a href="#cb62-12" aria-hidden="true" tabindex="-1"></a><span class="fu">qqline</span>(<span class="fu">residuals</span>(train_log), <span class="at">col =</span> <span class="st">"blue"</span>)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sigorta_analiz1_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="residuals-vs-fitted-plot" class="level4">
+<h4 class="anchored" data-anchor-id="residuals-vs-fitted-plot"><strong>1.Residuals vs Fitted Plot</strong></h4>
+<p>Logaritmik dönüşüm uygulanmış modele ait “Artıklar vs.&nbsp;Tahmin Değerleri” grafiği, model artıklarının tahmin edilen değerler karşısında <strong>rastgele dağılmadığını</strong> ortaya koymaktadır. Özellikle tahmin değerlerinin 8–11 aralığında, artıkların belirgin bir eğri formu sergilemesi, modelin doğrusal ilişki varsayımından sapmalar içerdiğini düşündürmektedir. Ayrıca, 8 civarında pozitif ve negatif uç değerlerin bir araya toplanması, <strong>varyansın sabit olmadığına (heteroskedastisite olasılığına)</strong> işaret eder.</p>
+</section>
+<section id="q-q-plot-3" class="level4">
+<h4 class="anchored" data-anchor-id="q-q-plot-3"><strong>2. Q-Q Plot</strong></h4>
+<p>Bu grafikte, artıkların normal dağılım varsayımından sapmalar sergilediği görülmektedir. Özellikle uç değerlerde (her iki kuyrukta), noktalar referans çizgisinden ciddi şekilde ayrılmaktadır. Bu durum, <strong>artıkların normal dağılmadığını</strong> ve klasik regresyon varsayımlarının bu modelde tam olarak sağlanmadığını göstermektedir.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>log_model_lm <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(charges) <span class="sc">~</span>., <span class="at">data =</span> traindata)</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Leverage</span></span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>leverage <span class="ot">&lt;-</span> <span class="fu">hatvalues</span>(log_model_lm)</span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Cook's Distance</span></span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>cooksd <span class="ot">&lt;-</span> <span class="fu">cooks.distance</span>(log_model_lm)</span>
+<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Cook's D</span></span>
+<span id="cb63-10"><a href="#cb63-10" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(cooksd, <span class="at">type =</span> <span class="st">"h"</span>, <span class="at">main =</span> <span class="st">"Cook's Distance - Log Model"</span>)</span>
+<span id="cb63-11"><a href="#cb63-11" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">4</span><span class="sc">/</span><span class="fu">length</span>(cooksd), <span class="at">col =</span> <span class="st">"red"</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sigorta_analiz1_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Grafikte, <em>log model</em> altında yer alan Cook’s Distance değerlerinin dağılımı sunulmaktadır. Yatay eksende gözlem numaraları, dikey eksende ise her bir gözlemin Cook’s Distance değeri yer almaktadır. Genel olarak, çoğu gözlemin Cook’s Distance değeri düşük seviyelerde kalırken, bazı gözlemler belirgin şekilde yüksek değerlere sahiptir. Bu yüksek değerler, modelin doğruluğu üzerinde güçlü bir etkiye sahip olabilecek gözlemleri işaret eder.</p>
+</section>
+</section>
+</section>
+<section id="b-random-forest-modeli" class="level2">
+<h2 class="anchored" data-anchor-id="b-random-forest-modeli">b) Random Forest Modeli</h2>
+<p>Random Forest modeli, doğrusal varsayımların ötesine geçerek veri içerisindeki karmaşık ve doğrusal olmayan ilişkileri modelleyebilme yeteneğiyle dikkat çekmektedir.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>train_rf <span class="ot">&lt;-</span> <span class="fu">train</span>(</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>  charges <span class="sc">~</span> .,</span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> traindata,</span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"rf"</span>,</span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="st">"RMSE"</span></span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>pred_rf <span class="ot">&lt;-</span> <span class="fu">predict</span>(train_rf, <span class="at">newdata =</span> testdata)</span>
+<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a><span class="fu">postResample</span>(<span class="at">pred =</span> pred_rf, <span class="at">obs =</span> testdata<span class="sc">$</span>charges)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>        RMSE     Rsquared          MAE 
+4516.8969093    0.8519519 2601.7615790 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="fu">varImp</span>(train_rf) <span class="co"># özellik önemlilik analizi</span></span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>rf variable importance
+
+                 Overall
+smokeryes       100.0000
+bmi              27.8439
+age              18.1601
+children          2.3674
+sexmale           0.2084
+regionsoutheast   0.1836
+regionnorthwest   0.1265
+regionsouthwest   0.0000</code></pre>
+</div>
+</div>
+<p>Elde edilen metrikler, daha önce uygulanan lineer ve robust regresyon modellerine kıyasla önemli bir performans iyileşmesi ortaya koymaktadır. Özellikle R² değerindeki sıçrama, modelin gözlemlenen değişkenliği çok daha başarılı bir şekilde açıklayabildiğini göstermektedir.</p>
+<p>Özellik önemlilik analizine göre:</p>
+<ul>
+<li><p><strong>Sigara kullanımı (<code>smoker</code>)</strong>, modelin tahmin gücüne en yüksek katkıyı sağlamaktadır ve diğer değişkenlerden belirgin şekilde ayrışmaktadır.</p>
+<p>Ardından gelen <strong>BMI</strong> ve <strong>yaş</strong>, göreli olarak daha düşük ancak anlamlı katkılar sunmaktadır.</p>
+<p>Cinsiyet ve bölge değişkenlerinin önemsizleştiği görülmekte; bu da modelin bu değişkenlerden anlamlı bir tahmin çıkaramadığını göstermektedir.</p></li>
+</ul>
+<p>Bu bulgular, modelin daha çok bireysel sağlık göstergeleri ve yaşam tarzı üzerine odaklandığını, demografik konum bilgilerini ise ihmal edilebilir bulduğunu ortaya koymaktadır. Random Forest modeli aynı zamanda uç değerlerden ve çoklu doğrusal ilişkilerden daha az etkilenmesi nedeniyle, regresyon varsayımlarının bozulduğu veri setlerinde güvenilir alternatiflerden biri olarak öne çıkmaktadır.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>performance_results <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="fu">c</span>(<span class="st">"Linear Regression"</span>, <span class="st">"Robust Regression"</span>, <span class="st">"Log Transformation"</span>, <span class="st">"Random Forest"</span>, <span class="st">"Ridge Regression"</span>, <span class="st">"Lasso Regression"</span>),</span>
+<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSE =</span> <span class="fu">c</span>(<span class="fl">5821.8428</span>, <span class="fl">6388.5644</span>, <span class="fl">8072.4566</span>, <span class="fl">4543.7252</span>, <span class="fl">5858.98</span>, <span class="fl">5817.741</span>),</span>
+<span id="cb68-7"><a href="#cb68-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">R_Squared =</span> <span class="fu">c</span>(<span class="fl">0.7553613</span>, <span class="fl">0.7407320</span>, <span class="fl">0.6656608</span>, <span class="fl">0.8501993</span>, <span class="fl">0.7504072</span>, <span class="fl">0.7539084</span>),</span>
+<span id="cb68-8"><a href="#cb68-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAE =</span> <span class="fu">c</span>(<span class="fl">3993.9864</span>, <span class="fl">3158.1226</span>, <span class="fl">4008.0112</span>, <span class="fl">2601.0251</span>, <span class="cn">NA</span>, <span class="cn">NA</span>)</span>
+<span id="cb68-9"><a href="#cb68-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Kod</summary>
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>performance_results <span class="sc">%&gt;%</span></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">RMSE =</span> <span class="fu">round</span>(RMSE, <span class="dv">3</span>),</span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">R_Squared =</span> <span class="fu">round</span>(R_Squared, <span class="dv">3</span>),</span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">MAE =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(MAE), <span class="st">"-"</span>, <span class="fu">round</span>(MAE, <span class="dv">3</span>))</span>
+<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Modellerin Performans Karşılaştırması"</span>, <span class="at">digits =</span> <span class="dv">3</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">"striped"</span>, <span class="st">"hover"</span>, <span class="st">"condensed"</span>, <span class="st">"responsive"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_spec</span>(<span class="dv">1</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>, <span class="at">color =</span> <span class="st">"darkred"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_header_above</span>(<span class="fu">c</span>(<span class="st">" "</span> <span class="ot">=</span> <span class="dv">1</span>, <span class="st">"Performans Metrikleri"</span> <span class="ot">=</span> <span class="dv">3</span>))</span></code><button title="Panoya Kopyala" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="table-responsive">
+<table class="table table-striped table-hover table-condensed caption-top table-sm small" data-quarto-postprocess="true">
+<caption>Modellerin Performans Karşılaştırması</caption>
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th" style="text-align: left; empty-cells: hide; border-bottom: hidden;"></th>
+<th colspan="3" data-quarto-table-cell-role="th" style="text-align: center; border-bottom: hidden; padding-bottom: 0; padding-left: 3px; padding-right: 3px;"><div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Performans Metrikleri
+</div></th>
+</tr>
+<tr class="even">
+<th style="text-align: left;" data-quarto-table-cell-role="th">Model</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">RMSE</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">R_Squared</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">MAE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left; font-weight: bold; color: darkred !important;">Linear Regression</td>
+<td style="text-align: right;">5821.843</td>
+<td style="text-align: right;">0.755</td>
+<td style="text-align: left;">3993.986</td>
+</tr>
+<tr class="even">
+<td style="text-align: left; font-weight: bold; color: darkred !important;">Robust Regression</td>
+<td style="text-align: right;">6388.564</td>
+<td style="text-align: right;">0.741</td>
+<td style="text-align: left;">3158.123</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left; font-weight: bold; color: darkred !important;">Log Transformation</td>
+<td style="text-align: right;">8072.457</td>
+<td style="text-align: right;">0.666</td>
+<td style="text-align: left;">4008.011</td>
+</tr>
+<tr class="even">
+<td style="text-align: left; font-weight: bold; color: darkred !important;">Random Forest</td>
+<td style="text-align: right;">4543.725</td>
+<td style="text-align: right;">0.850</td>
+<td style="text-align: left;">2601.025</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left; font-weight: bold; color: darkred !important;">Ridge Regression</td>
+<td style="text-align: right;">5858.980</td>
+<td style="text-align: right;">0.750</td>
+<td style="text-align: left;">-</td>
+</tr>
+<tr class="even">
+<td style="text-align: left; font-weight: bold; color: darkred !important;">Lasso Regression</td>
+<td style="text-align: right;">5817.741</td>
+<td style="text-align: right;">0.754</td>
+<td style="text-align: left;">-</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+</div>
+</div>
+</section>
+</section>
+<section id="model-performans-özeti" class="level1">
+<h1>Model Performans Özeti</h1>
+<p>Performans metriklerine baktığımızda, <strong>Random Forest</strong> modeli en düşük RMSE ve MAE değerleriyle en başarılı tahmin modelidir. R² değeri %85 civarında, yani veri setindeki varyansın büyük bir kısmını açıklıyor. Ancak bu model, yorumlanabilirlik açısından klasik modellere göre daha karmaşık.</p>
+<p><strong>Lineer Regresyon, Ridge ve Lasso</strong> modelleri benzer performanslar sergiliyor. R² değerleri yaklaşık %75 civarında ve hata metrikleri makul seviyede. Lasso’da beklenen değişken eleme tam olarak gerçekleşmedi çünkü veri setindeki tüm değişkenler modele anlamlı katkı sağlıyor. Bu da multikolinearitenin düşük olduğuna işaret ediyor.</p>
+<p><strong>Robust Regresyon</strong>, uç değerlerin etkisini azaltarak MAE’de iyileşme sağlamış fakat RMSE ve R² açısından Random Forest’in gerisinde kalıyor.</p>
+<p><strong>Logaritmik dönüşüm</strong> ise modele uyum sağlamamış; performansı diğer modellere göre zayıf.</p>
+<p>Özetle, tahmin doğruluğu ön plandaysa <strong>Random Forest</strong>, açıklanabilirlik ve basitlik isteniyorsa <strong>lineer modeller</strong> tercih edilmeli.</p>
+<section id="sonuç" class="level2">
+<h2 class="anchored" data-anchor-id="sonuç">Sonuç</h2>
+<p>Bu çalışmada, sağlık harcamalarını tahmin etmek için farklı regresyon modelleri ve makine öğrenmesi yöntemleri karşılaştırıldı. Veri setindeki değişkenlerin az ve birbirleriyle çok güçlü korelasyona sahip olmaması, klasik modellerin sağlam ve açıklanabilir sonuçlar vermesine olanak sağladı.</p>
+<p>Random Forest, tahmin doğruluğunda açık ara öne çıktı ancak yorumlanabilirlik açısından sınırlamalar taşıyor. Lineer, Ridge ve Lasso modelleri ise anlaşılır ve uygulanması kolay çözümler sunarken, performans açısından tatminkar sonuçlar verdi. Özellikle Lasso’da beklenen değişken elemenin olmaması, modelin veri setindeki tüm değişkenleri anlamlı bulduğunu gösterdi.</p>
+<p>Bu nedenle, yüksek doğruluk gerektiren uygulamalarda Random Forest tercih edilirken şeffaflık ve model basitliği önemli olduğunda klasik regresyon modelleri öncelikli olmalıdır. Proje, hem performans hem de yorumlanabilirlik açısından dengeli bir yaklaşımın önemini vurgulamaktadır.<br>
+</p>
+</section>
+</section>
+<section id="projenin-kapanışı" class="level1">
+<h1><strong>Projenin Kapanışı</strong></h1>
+<p><strong>“Regresyondan Ormana” başlıklı bu çalışma, benim veri bilimi yolculuğumdaki önemli bir dönüm noktası oldu. Farklı modellerin performansını ve veriyle ilişkisini derinlemesine inceledim. Bu süreç, her veri setinin kendine özgü dinamikleri olduğunu ve stratejik düşünmenin önemini gösterdi. Geriye dönüp baktığımda, bu süreci bir bitiş değil; daha karmaşık projeler için inşa edilmiş bir zemin olarak görüyorum.</strong></p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Kopyalandı");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Kopyalandı");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
