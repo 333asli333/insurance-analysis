@@ -1,0 +1,585 @@
+---
+title: "Regresyondan Ormana: Model Seçiminde Stratejik Yaklaşımlar"
+subtitle: "Insurance Veri Seti Üzerinden Küçük Bir Yolculuk"
+author: "Aslı Torun"
+format:
+  html:
+    theme: [cosmo, pastel-toned custom CSS]
+    toc: true
+    number-sections: true
+    fig-cap-location: bottom
+    code-fold: true
+editor: visual    
+---
+
+# Regresyondan Ormana: Model Seçiminde Stratejik Yaklaşımlar
+
+*Bu yolculukta, yalnızca model kurmakla sınırlı kalmadı; aynı zamanda istatistiksel anlamlılıkla pratik tahmin başarısı arasında bir denge kurma arayışına dönüştü. Klasik lineer regresyondan başlayan bu analiz süreci, varsayım ihlallerinin yönlendirmesiyle robust regresyona, log dönüşümüne ve Random Forest gibi güçlü makine öğrenmesi modellerine uzandı.*
+
+*Yorumlanabilirlik mi, öngörü gücü mü? Bu analiz boyunca her adımda bu sorunun cevabını yeniden düşündüm.*
+
+# GİRİŞ
+
+Bu çalışma, `insurance` veri seti üzerinden bireylerin sağlık harcamalarını (`charges`) tahmin etmek için kullanılan modellerin etkinliğini değerlendirmeyi amaçlamaktadır. Amaç, yalnızca doğrusal bir modelin sağlayabileceği tahmin performansını görmek değil; aynı zamanda model varsayımlarının sağlanıp sağlanmadığını incelemek, alternatif yaklaşımları test etmek ve tahmin performansı ile yorumlanabilirlik arasında bir denge kurmaya çalışmaktır.
+
+## Veri Setinin Tanıtımı
+
+Kullanılan veri seti `insurance` adlı veri setidir. Toplamda **1338 gözlem** ve **7 değişken** içermektedir. Bu değişkenler:
+
+-   `age`: Bireyin yaşı\
+-   `sex`: Cinsiyet\
+-   `bmi`: Vücut kitle indeksi\
+-   `children`: Çocuk sayısı\
+-   `smoker`: Sigara içme durumu\
+-   `region`: Bölge\
+-   `charges`: Sağlık sigortası maliyeti (bağımlı değişken)
+
+Veri setinde eksik değer bulunmamaktadır ve analiz için temizlenmiş bir yapıdadır.
+
+```{r}
+data <- insurance
+
+# Veri setindeki değişkenlerin tipini ve yapısını incelenmiştir..
+str(data)
+
+# Her değişken için özet istatistiklere göz atıldı.
+summary(data)
+
+# Veri setinde eksik değer olup olmadığı kontrol edildi.
+sum(is.na(data))
+
+```
+
+## Değişken Dönüşümleri
+
+Kategorik değişkenlerin uygun biçimde `factor` formatına dönüştürülmesiyle analiz için hazırlık tamamlanmıştır.
+
+```{r}
+data$smoker <- factor(data$smoker)
+data$sex <- factor(data$sex)
+data$region <- factor(data$region)
+```
+
+## Korelasyon Analizi
+
+Bağımsız değişkenlerden BMI ve hedef değişken olan `charges` arasındaki ilişki incelenmiştir.
+
+```{r}
+cor(data$bmi, data$charges)
+```
+
+Sonuç: Pozitif bir korelasyon gözlenmektedir ancak değer zayıf düzeydedir.
+
+## Görsel Keşif: BMI ve Charges
+
+```{r}
+plot(data$bmi, data$charges,
+     col = "pink", pch = 1,
+     main = "BMI ve CHARGER",
+     xlab = "BMI", ylab = "Sigorta ucreti")
+abline(h = 0 ,col = "darkblue", lwd = 2)
+```
+
+Bu grafik, bireylerin Vücut Kitle İndeksi (BMI) ile sigorta ücretleri arasındaki ilişkiyi göstermektedir. Görselde, BMI değeri arttıkça sigorta ücretlerinin artma eğilimi net bir şekilde görülmemektedir. Özellikle BMI değeri 30 civarında bir yoğunluk gözlemlenmiş, ancak bu grupta da ücret dağılımı oldukça geniş kalmıştır.
+
+Veri dağılımı, BMI değişkeninin sigorta ücretleri üzerindeki etkisinin tek başına sınırlı olabileceğini ve bu ilişkinin farklı değişkenlerle etkileşim içerisinde ele alınması gerektiğini düşündürmektedir.
+
+# Veri Setinin Eğitim ve Test olarak ayrılması
+
+```{r}
+set.seed(123)  # Tekrarlanabilirlik için
+index <- sample(1:nrow(data), size = 0.7 * nrow(data))
+traindata <- data[index, ]
+testdata <- data[-index, ]
+```
+
+# Lineer Regresyon Modeli
+
+Veri setindeki tüm bağımsız değişkenler modele dahil edilerek klasik doğrusal regresyon modeli kurulmuştur:
+
+```{r}
+
+model <- lm(charges ~ ., data = traindata)
+lm_pred <- predict(model, newdata = testdata)
+# Modelin özet istatistiklerini incelendi.
+summary(model)
+```
+
+Model, `bmi`, `age`, `children`, `smokeryes` değişkenlerinin istatistiksel olarak anlamlı etkiler sunduğunu göstermektedir. `sex` ve `region` gibi kategorik değişkenlerin düzeyleri ise anlamlılık eşiğinin altında kalmıştır. Modelin açıklayıcılığı yüksektir , bu da bağımlı değişkenin varyansının %74.6'inin model tarafından açıklandığını göstermektedir.
+
+### Varyans Enflasyon Faktörü (VIF) Sonuçları
+
+```{r}
+library(car)
+vif(model)
+```
+
+Modelde yer alan değişkenler için Varyans Enflasyon Faktörü (VIF) değerleri incelendiğinde, tüm değişkenlerin VIF değerlerinin 2’nin oldukça altında olduğu görülmektedir. Bu durum, modelde çoklu doğrusal bağlantı (multikolinearite) sorununa işaret eden ciddi bir bulgu olmadığını göstermektedir.
+
+```{r}
+#| message: false
+#| warning: false
+library(yardstick)
+library(dplyr)
+# Gerçek ve tahmin değerlerini birleştirildi
+lm_results <- data.frame(
+  truth = testdata$charges,
+  prediction = lm_pred
+)
+
+# Performans metrikleri hesaplandı
+lm_metrics <- lm_results %>%
+  metrics(truth = truth, estimate = prediction)
+
+print(lm_metrics)
+```
+
+Modelin test setinde elde edilen R² değeri %75.5 olarak hesaplanmış olup, eğitim setindeki %74.6 değerinden bir miktar daha yüksektir. Bu sonuç, modelin eğitim verisi dışında kalan yeni veriler üzerinde de güçlü bir açıklayıcılık sağladığını göstermektedir.
+
+## Model Varsayım Kontrolleri
+
+Doğrusal regresyon modelinin güvenilir sonuçlar verebilmesi için bazı varsayımların sağlanması beklenir. Bu varsayımlar artıkların normalliği, sabit varyans(homoscedasticity), doğrusal ilişki ve aykırı gözlem etkileridir.
+
+```{r}
+
+# Model varsayımlarını incelemek için residual plot çizildi
+par(mfrow = c(2,2))
+plot(model)
+```
+
+### 1.Residuals vs Fitted
+
+Model, veri setindeki belirli gruplarda sistematik sapmalar yapıyor olabilir. Lineerlik varsayımı tam olarak sağlanmamış olabilir, ancak robust regresyon bu etkileri hafifletmeyi amaçlar. Bu nedenle klasik regresyona kıyasla daha güvenilirdir.
+
+### 2. Q-Q Plot
+
+Artıkların dağılımı tam olarak normal değildir. Özellikle uç değerler normallikten sapmalar gözlemlenmektedir. Bu, t-testi gibi parametrik testlerde dikkat edilmesi gereken bir durumdur.
+
+### 3. Scale-Location
+
+Artıkların varyansı sabit değildir, bu durum **heteroskedastisite** işaretidir. Bu da klasik regresyon varsayımlarından birinin ihlali anlamına gelir. Robust regresyon, bu tür varyans değişimlerine daha dayanıklıdır.
+
+### 4. Residuals vs Leverage
+
+Bazı gözlemler yüksek leverage değerlerine sahiptir ve model üzerindeki etkisi büyüktür. Bu noktalar dikkatle incelenmeli, çünkü modelin genellenebilirliğini etkileyebilir.
+
+```{r}
+# Residual'ların normal dağılıma uyup uymadığını test edildi.
+shapiro.test(residuals(model))
+```
+
+Bu test sonucunda artıkların normal dağılmadığı istatistiksel olarak da doğrulanmıştır. (p \< 0.05)
+
+```{r}
+# Cook’s Distance hesaplandı
+cooksD <- cooks.distance(model)
+influential <- which(cooksD > (4 / nrow(data)))
+data[influential, ] 
+sum(influential)
+
+```
+
+**Cooks Distance:** Etkili gözlemleri belirlemek için Cook’s Distance kullanılmış ve oldukça yüksek sayıda etkili gözlem bulunmuştur. Bu kadar fazla sayıda gözlemin modelden çıkarılması, modeli ciddi şekilde daraltacağından uygun bir çözüm değildir. Bunun yerine, aykırı gözlemlere karşı dayanıklı bir yöntem denenmiştir.
+
+# Interaction Term Analizi
+
+```{r}
+model_interaction <- lm(charges ~ . + bmi:smoker, data = traindata)
+summary(model_interaction)
+
+```
+
+Etkileşim terimi eklenmiş modelde, açıklayıcı değişkenlerden *bmi* ile *smoker* arasındaki etkileşim anlamlı çıkmıştır (p \< 0.001). Bu durum, vücut kitle indeksi (BMI) ile sigara kullanımı arasında önemli bir etkileşim olduğunu ve bu iki değişkenin birlikte, sağlık harcamaları üzerinde birleşik bir etkisi olduğunu göstermektedir.
+
+Etkileşimli modelin açıklayıcılığı temel lineer modele kıyasla artmıştır. Bu da modele etkileşim eklemenin tahmin gücünü artırdığını göstermektedir.
+
+```{r}
+#| message: false
+#| warning: false
+library(ggplot2)
+
+ggplot(traindata, aes(x = bmi, y = charges, color = smoker)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_color_manual(values = c("yes" = "pink", "no" = "steelblue"))
+  labs(title = "BMI ve Charges Arasındaki İliski (Sigara Durumuna Gore)",
+       x = "BMI", y = "Charges") +
+  theme_gray()
+
+```
+
+Etkileşim terimi eklenmiş modelde, sigara kullanımı ve BMI arasındaki ilişkinin sağlık harcamalarını birlikte etkilediği görülmektedir. Modelin açıklayıcılığı artmış, etkileşim anlamlı bulunmuştur (*p \< 0.001*). Bu durum, BMI'nin etkisinin sigara içen bireylerde daha yüksek olduğunu göstermektedir.
+
+## Model Varsayımları
+
+```{r}
+par(mfrow = c(2, 2))
+plot(model_interaction)
+```
+
+### **1. Residuals vs Fitted:**
+
+Artıklar, düşük değerlerde biraz yoğunlaşmış ve bazı yüksek değerlerde sapmalar gözleniyor. Bu, modelin bazı uç tahminlerde sistematik hatalar yapabileceğini gösteriyor.
+
+### **2. Q-Q Plot:**
+
+Normal dağılıma uyum orta düzeyde. Kuyruklarda (özellikle üstte) ciddi sapmalar var. Normal dağılım varsayımı tam olarak sağlanmıyor.
+
+### **3. Scale-Location Plot:**
+
+Artık varyansı düşük değerlerde az, yüksek değerlerde artıyor. Bu durum **heteroskedastisite** ihtimalini gösteriyor.
+
+### **4. Residuals vs Leverage (Cook's Distance):**
+
+129\. gözlem dikkat çekiyor; yüksek kaldıraç ve etkili bir artık değer içeriyor. Modelin sağlamlığı açısından bu nokta incelenmeli.
+
+```{r}
+shapiro.test(residuals(model_interaction))
+```
+
+Shapiro-Wilk testi sonucuna göre, model artıklarının normal dağılım varsayımı **reddedilmiştir** (W = 0.66275, p \< 0.001). Bu bulgu, Q-Q grafiğindeki sapmalarla tutarlıdır ve klasik varsayımlar altında yorum yapılırken dikkatli olunması gerektiğini göstermektedir.
+
+```{r}
+cooksd <- cooks.distance(model_interaction)
+plot(cooksd, type = "h", main = "Cook's Distance", ylab = "Cook's Distance")
+abline(h = 4/length(cooksd), col = "darkred", lty = 2)
+
+```
+
+Interaction terimli model için yapılan Cook's Distance analizinde, bazı gözlemlerin model tahminlerine orantısız etki yaptığı gözlemlenmiştir. Grafik incelendiğinde, eşik değeri olan 4/n’in (kırmızı çizgi) üzerinde kalan birkaç gözlem dikkat çekmektedir. Bu noktalar, potansiyel olarak etkili gözlemler olup, modelin sağlamlığı açısından ayrı değerlendirilmelidir.
+
+#### Varyans Enflasyon Faktörü (VIF) Sonuçları
+
+```{r}
+library(car)
+vif(model_interaction)
+```
+
+Modeldeki `smoker` ve `bmi:smoker` değişkenlerine ait VIF değerleri sırasıyla **4.98** ve **5.01** olarak hesaplanmıştır. Bu değerler, değişkenler arasında anlamlı bir **çoklu doğrusal bağlantı (multikolinearite)** olabileceğini göstermektedir. Diğer tüm değişkenlerin VIF değerleri 2’nin altındadır ve bu durum diğer değişkenlerde multikolinearite sorununun olmadığını göstermektedir. Bu bağlamda, özellikle `smoker` ve `bmi:smoker` değişkenlerinin yüksek korelasyon taşıdığı göz önünde bulundurulmalıdır.
+
+# Düzenlileştirme Teknikleriyle Modelin Dengesi: Ridge & Lasso”
+
+Ridge ve Lasso regresyon modelleri, klasik lineer modele göre değişken sayısı fazla ya da çoklu doğrusal bağlantı ihtimali olan veri setlerinde aşırı uyum (overfitting) riskini azaltmak amacıyla tercih edilir. Bu modeller, parametre katsayılarını belirli bir ceza terimi ile küçülterek daha dengeli tahminler sunar.
+
+```{r}
+#| message: false
+#| warning: false
+library(glmnet)
+library(caret)
+
+set.seed(123)
+x_train <- model.matrix(charges ~ ., data = traindata)[,-1]  # -1 intercepti çıkarıldı
+y_train <- traindata$charges
+
+x_test <- model.matrix(charges ~ ., data = testdata)[,-1]
+y_test <- testdata$charges
+# 3. Ridge modeli (alpha=0) ve lambda için cross-validation
+set.seed(123)
+cv_ridge <- cv.glmnet(x_train, y_train, alpha = 0)
+
+# En iyi lambda'yı al
+best_lambda_ridge <- cv_ridge$lambda.min
+
+# Modeli eğit
+ridge_model <- glmnet(x_train, y_train, alpha = 0, lambda = best_lambda_ridge)
+
+# 4. Lasso modeli (alpha=1) ve lambda için cross-validation
+set.seed(123)
+cv_lasso <- cv.glmnet(x_train, y_train, alpha = 1)
+
+best_lambda_lasso <- cv_lasso$lambda.min
+
+lasso_model <- glmnet(x_train, y_train, alpha = 1, lambda = best_lambda_lasso)
+
+# 5. Tahminler
+ridge_pred <- predict(ridge_model, s = best_lambda_ridge, newx = x_test)
+lasso_pred <- predict(lasso_model, s = best_lambda_lasso, newx = x_test)
+
+# 6. Performans ölçümleri (örnek olarak RMSE ve R2)
+library(Metrics)
+
+rmse_ridge <- rmse(y_test, ridge_pred)
+rmse_lasso <- rmse(y_test, lasso_pred)
+
+# R^2 için basit hesaplama
+rsq <- function(true, pred) {
+  1 - sum((true - pred)^2) / sum((true - mean(true))^2)
+}
+r2_ridge <- rsq(y_test, ridge_pred)
+r2_lasso <- rsq(y_test, lasso_pred)
+
+# 7. Lasso'da sıfırlanan değişkenler
+coef_lasso <- coef(lasso_model)
+
+coef_lasso <- coef(lasso_model)
+# Katsayıları veri çerçevesine çevirip sıfır olanları filtrele
+lasso_df <- as.data.frame(as.matrix(coef_lasso))
+lasso_df$feature <- rownames(lasso_df)
+colnames(lasso_df)[1] <- "coefficient"
+
+zero_coef <- subset(lasso_df, coefficient == 0 & feature != "(Intercept)")
+
+cat("Lasso'da sifirlanan degiskenler:\n")
+print(zero_coef$feature)
+
+
+# Çıktılar
+cat("Ridge RMSE:", rmse_ridge, "R2:", r2_ridge, "\n")
+cat("Lasso RMSE:", rmse_lasso, "R2:", r2_lasso, "\n")
+cat("Lasso'da sifirlanan degiskenler:\n")
+print(names(zero_coef))
+```
+
+### **Model Performansı**
+
+Her iki modelin test verisi üzerindeki performansına baktığımızda, Ridge ve Lasso benzer RMSE ve R² değerlerini verdi. Bu durum, veri setindeki çoklu doğrusal bağlantının ciddi bir sorun olmadığını ve modellerin veri yapısına iyi uyduğunu gösteriyor.
+
+### **Lasso'nun Değişken Seçimi**
+
+Lasso modelinde beklenenin aksine bazı değişkenlerin katsayıları sıfırlanmadı. Bu, veri setindeki değişkenlerin hepsinin modele belirli bir katkısı olduğunu ve değişken sayısının az olması nedeniyle modelin baskılayıcı ceza terimiyle değişken eleme yapamadığını işaret ediyor. Bu da multikolinearitenin az olduğunu destekliyor.
+
+Bu sonuçlar, klasik regresyon analizinde multikolinearite sorunu olmadığını doğruluyor. Ridge ve Lasso'nun benzer sonuçlar vermesi, değişkenlerin her birinin modele anlamlı katkısı olduğunu gösteriyor. Dolayısıyla bu veri setinde, modellerin karmaşıklığını artırmadan klasik doğrusal regresyonla sağlam ve açıklanabilir modeller kurmak mümkün. Ancak, ileriye dönük büyük ve daha karmaşık veri setlerinde Ridge ve Lasso gibi düzenlileştirme teknikleri önem kazanacaktır.
+
+# Robust Regresyon
+
+Aykırı değerlere karşı daha dayanıklı bir yöntem olan Robust Lineer Regresyon kullanılarak model yeniden kurulmuştur.
+
+```{r}
+#| message: false
+#| warning: false
+library(MASS)
+library(yardstick)
+library(dplyr)
+robust_model <- rlm(charges ~. , data = traindata)
+rlm_pred <- predict(robust_model, newdata = testdata)
+
+summary(robust_model)
+```
+
+```{r}
+# Gerçek ve tahmin değerlerini birleştirildi
+rlm_results <- data.frame(
+  truth = testdata$charges,
+  prediction = rlm_pred
+)
+
+# Performans metriklerini hesaplandı
+rlm_metrics <- rlm_results %>%
+  metrics(truth = truth, estimate = prediction)
+
+print(rlm_metrics)
+```
+
+Yeni modelde sapmalar önemli ölçüde azalmış, artıkların dağılımı daha kararlı hale gelmiştir. Özellikle “smoker” değişkeni modelde çok baskın bir değişken olarak kalmıştır. Modelin açıklayıcılığı ise %74 olarak bulunmuştur.
+
+## Model Varsayımı Kontrolleri
+
+```{r}
+par(mfrow = c(2,2))
+plot(robust_model)
+```
+
+### 1. Residuals vs Fitted
+
+Model, veri setindeki belirli gruplarda sistematik sapmalar yapıyor olabilir. Lineerlik varsayımı tam olarak sağlanmamış olabilir ancak robust regresyon bu etkileri hafifletmeyi amaçlar. Bu nedenle klasik regresyona kıyasla daha güvenilirdir.
+
+### 2. Q-Q Plot
+
+Artıkların dağılımı tam olarak normal olmamakla birlikte uç noktalarda teorik çizgiden sapmalar var. Bu durum klasik OLS model için sorun yaratabilirken robust regresyon uç değerlere karşı daha dirençli olduğu için modelin güvenilirliğini önemli ölçüde korur.
+
+### 3. Scale-Location
+
+Modelde **değişen varyans (heteroskedastisite)** söz konusu olabilir. Artıkların varyansı fitted değerlere göre artıyor gibi görünüyor. Düşük ve yüksek tahmin değerlerinde daha geniş bir yayılma gözleniyor. Ancak robust regresyon bu gibi sorunlara karşı daha dayanıklıdır. Yine de varyans stabilitesinin sınırlı olduğu göz önünde bulundurulmalı.
+
+### 4. Residuals vs Leverage
+
+Çoğu gözlem düşük leverage ve düşük standardized residuals bölgesinde yoğunlaşmış. Cook's distance çizgisine yakın ya da üzerinde birkaç gözlem mevcut. Veri setinde model üzerinde yüksek etkili birkaç gözlem var.
+
+#### Genel değerlendirme
+
+Robust regresyon modeli, veri setindeki uç değerler ve değişen varyans gibi klasik modellemeyi bozabilecek durumlara karşı başarılı bir çözüm sunmuştur. Yine de bazı model varsayımlarında (örneğin homoskedastisite ve normalite) sınırlı sapmalar mevcuttur. Bu model, yorumlanabilirliği korurken klasik modele göre daha sağlam bir çözüm sunar.
+
+#### Robust Regresyonda Normallik Varsayımı Neden Kritik Değildir?
+
+Klasik lineer regresyon modellerinde (OLS - Ordinary Least Squares), artıkların (residuals) normal dağıldığı varsayımı modelin güven aralıkları, p-değerleri gibi istatistiksel çıkarımlarda doğru sonuçlar elde edebilmek için önemlidir. Ancak bu varsayım modelin tahmin performansı açısından **doğrudan zorunlu değildir**.
+
+Robust regresyon (`rlm()`), özellikle uç değerlerin (outliers) ve yüksek leverage’lı gözlemlerin modele olan etkisini azaltmak amacıyla geliştirilmiş bir tekniktir. Bu model, **M-tahmin edicileri** kullanarak, hataları minimize ederken klasik OLS'nin duyarlılığını azaltır.
+
+Robust regresyonda model tahminlerinin güvenilirliği, artıkların normal dağılıp dağılmamasından daha az etkilenir.
+
+```{r}
+shapiro.test(resid(robust_model))
+
+```
+
+-   Normallik testi yapılabilir ancak bu testler daha çok **artıkların genel yapısını gözlemlemek** amacıyla kullanılır, varsayım ihlali modelin geçerliliğini doğrudan bozmaz.
+
+    Robust regresyonun avantajı, dağılım varsayımlarına bağlı olmadan bile **istikrarlı ve etkili sonuçlar üretebilmesidir.**
+
+# Regresyonun Alternatif Biçimleri: Dönüşüm ve Doğrusal Olmayan Yöntemler
+
+## a) Logaritmik Dönüşüm
+
+Bu dönüşüm, genellikle değişen varyans (heteroskedastisite) sorununu azaltmak ve verinin dağılımını normalize etmek için kullanılır. Bu dönüşüm, regresyon modelinin daha stabil ve güvenilir sonuçlar üretmesine yardımcı olabilir.
+
+```{r}
+#| message: false
+#| warning: false
+library(caret)
+
+train_log <- train(
+  log(charges) ~. ,
+  data = traindata,
+  method = "lm",
+  metric = "RMSE"
+)
+
+summary(train_log)
+
+
+pred_log <- predict(train_log, newdata = testdata)
+pred_log_exp <- exp(pred_log)
+postResample(pred = pred_log_exp, obs = testdata$charges)
+```
+
+#### Modelin katsayılarına bakıldığında:
+
+Yaş 1 yıl arttığında, sağlık harcamaları **yaklaşık %3.3 artar**.
+
+Erkeklerin sağlık harcamaları, kadınlara göre **yaklaşık %7.4 daha düşük**.
+
+BMI değeri 1 birim arttığında harcamalar **%1.53 artar**.
+
+Sigara içenlerin harcamaları, içmeyenlere göre **yaklaşık exp(1.557) ≈ 4.74 kat** daha fazladır.
+
+**southeast bölgesindekiler**, northeast bölgesine göre **%14.9 daha az harcama yapmaktadır.**
+
+Logaritmik dönüşümle kurulan lineer modelin eğitim verisindeki performans göstergesi `R² = 0.768` olup model charges değişkenindeki varyansın yaklaşık %76.8’ini açıklayabilmektedir. Ancak test verisindeki R² değeri `0.665` olarak bulunmuştur. Bu fark, modelin eğitim verisine ne kadar uyum sağladığıyla, yeni veriler üzerinde ne kadar genellenebilir olduğunu gösteren önemli bir göstergedir. Eğitim setine göre daha düşük çıkan test seti R² değeri, modelin öğrenilen desenleri yeni veriye tam olarak genelleyemediğini ortaya koymaktadır. Bu durum, log dönüşüm uygulansa da belirli doğrusal olmayan ilişkilerin veya etkileşimlerin modelin tahmin gücünü sınırladığını düşündürmektedir.
+
+### Model Varsayım Kontrolleri
+
+```{r}
+par(mfrow = c(1,2))
+# Residuals vs Fitted
+plot(fitted(train_log), residuals(train_log),
+     col = "pink",
+     xlab = "Fitted values",
+     ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "darkred")
+
+# Q-Q Plot
+qqnorm(residuals(train_log))
+qqline(residuals(train_log), col = "blue")
+
+
+```
+
+#### **1.Residuals vs Fitted Plot**
+
+Logaritmik dönüşüm uygulanmış modele ait “Artıklar vs. Tahmin Değerleri” grafiği, model artıklarının tahmin edilen değerler karşısında **rastgele dağılmadığını** ortaya koymaktadır. Özellikle tahmin değerlerinin 8–11 aralığında, artıkların belirgin bir eğri formu sergilemesi, modelin doğrusal ilişki varsayımından sapmalar içerdiğini düşündürmektedir. Ayrıca, 8 civarında pozitif ve negatif uç değerlerin bir araya toplanması, **varyansın sabit olmadığına (heteroskedastisite olasılığına)** işaret eder.
+
+#### **2. Q-Q Plot**
+
+Bu grafikte, artıkların normal dağılım varsayımından sapmalar sergilediği görülmektedir. Özellikle uç değerlerde (her iki kuyrukta), noktalar referans çizgisinden ciddi şekilde ayrılmaktadır. Bu durum, **artıkların normal dağılmadığını** ve klasik regresyon varsayımlarının bu modelde tam olarak sağlanmadığını göstermektedir.
+
+```{r}
+log_model_lm <- lm(log(charges) ~., data = traindata)
+
+# Leverage
+leverage <- hatvalues(log_model_lm)
+
+# Cook's Distance
+cooksd <- cooks.distance(log_model_lm)
+
+# Plot Cook's D
+plot(cooksd, type = "h", main = "Cook's Distance - Log Model")
+abline(h = 4/length(cooksd), col = "red", lty = 2)
+
+
+```
+
+Grafikte, *log model* altında yer alan Cook's Distance değerlerinin dağılımı sunulmaktadır. Yatay eksende gözlem numaraları, dikey eksende ise her bir gözlemin Cook's Distance değeri yer almaktadır. Genel olarak, çoğu gözlemin Cook's Distance değeri düşük seviyelerde kalırken, bazı gözlemler belirgin şekilde yüksek değerlere sahiptir. Bu yüksek değerler, modelin doğruluğu üzerinde güçlü bir etkiye sahip olabilecek gözlemleri işaret eder.
+
+## b) Random Forest Modeli
+
+Random Forest modeli, doğrusal varsayımların ötesine geçerek veri içerisindeki karmaşık ve doğrusal olmayan ilişkileri modelleyebilme yeteneğiyle dikkat çekmektedir.
+
+```{r}
+train_rf <- train(
+  charges ~ .,
+  data = traindata,
+  method = "rf",
+  metric = "RMSE"
+)
+
+pred_rf <- predict(train_rf, newdata = testdata)
+postResample(pred = pred_rf, obs = testdata$charges)
+
+varImp(train_rf) # özellik önemlilik analizi
+
+```
+
+Elde edilen metrikler, daha önce uygulanan lineer ve robust regresyon modellerine kıyasla önemli bir performans iyileşmesi ortaya koymaktadır. Özellikle R² değerindeki sıçrama, modelin gözlemlenen değişkenliği çok daha başarılı bir şekilde açıklayabildiğini göstermektedir.
+
+Özellik önemlilik analizine göre:
+
+-   **Sigara kullanımı (`smoker`)**, modelin tahmin gücüne en yüksek katkıyı sağlamaktadır ve diğer değişkenlerden belirgin şekilde ayrışmaktadır.
+
+    Ardından gelen **BMI** ve **yaş**, göreli olarak daha düşük ancak anlamlı katkılar sunmaktadır.
+
+    Cinsiyet ve bölge değişkenlerinin önemsizleştiği görülmekte; bu da modelin bu değişkenlerden anlamlı bir tahmin çıkaramadığını göstermektedir.
+
+Bu bulgular, modelin daha çok bireysel sağlık göstergeleri ve yaşam tarzı üzerine odaklandığını, demografik konum bilgilerini ise ihmal edilebilir bulduğunu ortaya koymaktadır. Random Forest modeli aynı zamanda uç değerlerden ve çoklu doğrusal ilişkilerden daha az etkilenmesi nedeniyle, regresyon varsayımlarının bozulduğu veri setlerinde güvenilir alternatiflerden biri olarak öne çıkmaktadır.
+
+```{r}
+#| message: false
+#| warning: false
+library(kableExtra)
+library(dplyr)
+
+performance_results <- data.frame(
+  Model = c("Linear Regression", "Robust Regression", "Log Transformation", "Random Forest", "Ridge Regression", "Lasso Regression"),
+  RMSE = c(5821.8428, 6388.5644, 8072.4566, 4543.7252, 5858.98, 5817.741),
+  R_Squared = c(0.7553613, 0.7407320, 0.6656608, 0.8501993, 0.7504072, 0.7539084),
+  MAE = c(3993.9864, 3158.1226, 4008.0112, 2601.0251, NA, NA)
+)
+```
+
+```{r}
+performance_results %>%
+  mutate(
+    RMSE = round(RMSE, 3),
+    R_Squared = round(R_Squared, 3),
+    MAE = ifelse(is.na(MAE), "-", round(MAE, 3))
+  ) %>%
+  kable(caption = "Modellerin Performans Karşılaştırması", digits = 3) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  column_spec(1, bold = TRUE, color = "darkred") %>%
+  add_header_above(c(" " = 1, "Performans Metrikleri" = 3))
+
+```
+
+# Model Performans Özeti
+
+Performans metriklerine baktığımızda, **Random Forest** modeli en düşük RMSE ve MAE değerleriyle en başarılı tahmin modelidir. R² değeri %85 civarında, yani veri setindeki varyansın büyük bir kısmını açıklıyor. Ancak bu model, yorumlanabilirlik açısından klasik modellere göre daha karmaşık.
+
+**Lineer Regresyon, Ridge ve Lasso** modelleri benzer performanslar sergiliyor. R² değerleri yaklaşık %75 civarında ve hata metrikleri makul seviyede. Lasso’da beklenen değişken eleme tam olarak gerçekleşmedi çünkü veri setindeki tüm değişkenler modele anlamlı katkı sağlıyor. Bu da multikolinearitenin düşük olduğuna işaret ediyor.
+
+**Robust Regresyon**, uç değerlerin etkisini azaltarak MAE’de iyileşme sağlamış fakat RMSE ve R² açısından Random Forest’in gerisinde kalıyor.
+
+**Logaritmik dönüşüm** ise modele uyum sağlamamış; performansı diğer modellere göre zayıf.
+
+Özetle, tahmin doğruluğu ön plandaysa **Random Forest**, açıklanabilirlik ve basitlik isteniyorsa **lineer modeller** tercih edilmeli.
+
+## Sonuç
+
+Bu çalışmada, sağlık harcamalarını tahmin etmek için farklı regresyon modelleri ve makine öğrenmesi yöntemleri karşılaştırıldı. Veri setindeki değişkenlerin az ve birbirleriyle çok güçlü korelasyona sahip olmaması, klasik modellerin sağlam ve açıklanabilir sonuçlar vermesine olanak sağladı.
+
+Random Forest, tahmin doğruluğunda açık ara öne çıktı ancak yorumlanabilirlik açısından sınırlamalar taşıyor. Lineer, Ridge ve Lasso modelleri ise anlaşılır ve uygulanması kolay çözümler sunarken, performans açısından tatminkar sonuçlar verdi. Özellikle Lasso’da beklenen değişken elemenin olmaması, modelin veri setindeki tüm değişkenleri anlamlı bulduğunu gösterdi.
+
+Bu nedenle, yüksek doğruluk gerektiren uygulamalarda Random Forest tercih edilirken şeffaflık ve model basitliği önemli olduğunda klasik regresyon modelleri öncelikli olmalıdır. Proje, hem performans hem de yorumlanabilirlik açısından dengeli bir yaklaşımın önemini vurgulamaktadır.\
+
+# **Projenin Kapanışı**
+
+**“Regresyondan Ormana” başlıklı bu çalışma, benim veri bilimi yolculuğumdaki önemli bir dönüm noktası oldu. Farklı modellerin performansını ve veriyle ilişkisini derinlemesine inceledim. Bu süreç, her veri setinin kendine özgü dinamikleri olduğunu ve stratejik düşünmenin önemini gösterdi. Geriye dönüp baktığımda, bu süreci bir bitiş değil; daha karmaşık projeler için inşa edilmiş bir zemin olarak görüyorum.**
