@@ -38,6 +38,8 @@ Kullanılan veri seti `insurance` adlı veri setidir. Toplamda **1338 gözlem** 
 Veri setinde eksik değer bulunmamaktadır ve analiz için temizlenmiş bir yapıdadır.
 
 ```{r}
+insurance <- read.csv("insurance.csv")
+
 data <- insurance
 
 # Veri setindeki değişkenlerin tipini ve yapısını incelenmiştir..
