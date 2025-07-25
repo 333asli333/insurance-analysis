@@ -1,74 +1,59 @@
-# insurance-analysis
-Regresyondan Ormana: Model Seçiminde Stratejik Yaklaşımlar
+# 📊 insurance-analysis  
+## Regresyondan Ormana: Model Seçiminde Stratejik Yaklaşımlar
+
 Bu projede, bireylerin demografik ve yaşam tarzı bilgilerine göre sağlık harcamalarını (charges) tahmin etmeyi amaçlayan farklı regresyon modelleri karşılaştırılmıştır. Modelleme sürecinde klasik istatistiksel yöntemler ile makine öğrenmesi teknikleri bir araya getirilmiş, yorumlanabilirlik ve tahmin gücü arasında stratejik bir denge arayışı vurgulanmıştır.
 
-🔍 Kullanılan Veri Seti
-Veri seti Kaggle üzerinden temin edilmiştir:
-🔗 Insurance Dataset (Simple Linear Regression) - Kaggle
+---
 
-Veri seti aşağıdaki değişkenleri içermektedir:
+## 🔍 Kullanılan Veri Seti
 
-age: Kişinin yaşı
+Veri seti Kaggle üzerinden temin edilmiştir:  
+🔗 [Insurance Dataset (Simple Linear Regression) - Kaggle](https://www.kaggle.com/datasets/taseermehboob9/insurance-dataset-simple-linear-regression)
 
-sex: Cinsiyet
+### 📌 Değişkenler
 
-bmi: Vücut kitle indeksi
+- `age`: Kişinin yaşı  
+- `sex`: Cinsiyet  
+- `bmi`: Vücut kitle indeksi  
+- `children`: Çocuk sayısı  
+- `smoker`: Sigara içme durumu  
+- `region`: Yaşanılan bölge  
+- `charges`: Yıllık sağlık harcaması
 
-children: Çocuk sayısı
+---
 
-smoker: Sigara içme durumu
+## ⚙️ Kullanılan Yöntemler
 
-region: Yaşanılan bölge
-
-charges: Yıllık sağlık harcaması
-
-⚙️ Kullanılan Yöntemler
 Bu projede aşağıdaki modelleme teknikleri kullanılmıştır:
 
-✅ Lineer Regresyon (lm)
+- ✅ **Lineer Regresyon** (`lm`)  
+- 🛡️ **Robust Regresyon** (`rlm`)  
+- ✴️ **Etkileşimli Modelleme** (`bmi * smoker`)  
+- 🔁 **Logaritmik Dönüşüm**  
+- 🌲 **Random Forest**  
+- 🧬 **Lasso Regresyon**  
+- 📏 **Ridge Regresyon**
 
-🛡️ Robust Regresyon (rlm)
+---
 
-✴️ Etkileşimli Modelleme (bmi * smoker)
+## 📈 Model Değerlendirme ve Analizler
 
-🔁 Logaritmik Dönüşüm
-
-🌲 Random Forest
-
-🧬 Lasso Regresyon
-
-📏 Ridge Regresyon
-
-📈 Model Değerlendirme ve Analizler
 Model performansı aşağıdaki kriterlerle değerlendirilmiştir:
 
-Varsayım kontrolleri (residual vs fitted, Q-Q, leverage analizi)
+- Varsayım kontrolleri (Residual vs Fitted, Q-Q, Scale-Location, Leverage)  
+- Multikolinearite (VIF değerleri)  
+- Aykırı gözlem ve etkili nokta tespiti (Cook’s Distance)  
+- Eğitim ve test seti R² farkı  
+- Model karşılaştırmaları (RMSE, MAE, görsel analizler)
 
-Multikolinearite (VIF değerleri)
+---
 
-Aykırı gözlem ve etkili nokta tespiti (Cook’s Distance)
+## 🖥️ Quarto ile Çalıştırma
 
-Test ve eğitim seti R² farkı
+Projeyi Quarto ile çalıştırmak için:  
+RStudio üzerinde `.qmd` dosyasını açarak **"Render"** butonuna tıklayabilirsiniz.  
+Alternatif olarak terminal üzerinden:
 
-Model karşılaştırmaları (RMSE, MAE, görsel karşılaştırmalar)
-
-🖥️ Quarto ile Çalıştırma
-Projeyi Quarto ile render etmek için:
-RStudio üzerinde .qmd dosyasını açarak "Render" butonuna tıklayabilirsiniz.
-
-
-🧠 Neler Öğrendim?
-Klasik modellerde varsayım ihlallerini nasıl tespit ederim?
-
-Etkileşim terimleri modeli nasıl geliştirir?
-
-Robust regresyon ne zaman tercih edilir?
-
-Yüksek tahmin gücü için Random Forest ve düzenlileştirilmiş modellerin rolü nedir?
-
-Yorumlanabilirlik ve performans arasında denge kurmak neden önemlidir?
-
-📬 Geri Bildirim ve Katkı
-Bu projeyi öğrenme amacıyla geliştirdim. Geliştirme fikirleri, katkılar veya önerileriniz varsa LinkedIn üzerinden bana ulaşabilir ya da doğrudan PR gönderebilirsiniz.
-
+```bash
+quarto render sigorta_quarto.qmd --output-dir docs --output-file index.html
 
