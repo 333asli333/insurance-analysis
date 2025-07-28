@@ -8,7 +8,7 @@ Bu projede, bireylerin demografik ve yaşam tarzı bilgilerine göre sağlık ha
 ## 🔍 Kullanılan Veri Seti
 
 Veri seti Kaggle üzerinden temin edilmiştir:  
-🔗 [Insurance Dataset (Simple Linear Regression) - Kaggle](https://www.kaggle.com/datasets/taseermehboob9/insurance-dataset-simple-linear-regression)
+🔗 [Insurance Dataset - Kaggle](https://www.kaggle.com/datasets/teertha/ushealthinsurancedataset)
 
 ### 📌 Değişkenler
 
